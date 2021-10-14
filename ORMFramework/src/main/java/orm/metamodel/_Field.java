@@ -1,8 +1,11 @@
 package orm.metamodel;
 
-public class MField {
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
-    private MEntity entity;
+public class _Field {
+
+    private _Entity entity;
 
     private String name;
 
@@ -18,16 +21,20 @@ public class MField {
 
     private boolean isNullable = false;
 
-    public MField(MEntity entity, String name) {
+    private Method getter = null;
+
+    private Method setter = null;
+
+    public _Field(_Entity entity, String name) {
         this.entity = entity;
         this.name = name;
     }
 
-    public MEntity getEntity() {
+    public _Entity getEntity() {
         return entity;
     }
 
-    public void setEntity(MEntity entity) {
+    public void setEntity(_Entity entity) {
         this.entity = entity;
     }
 
@@ -85,5 +92,22 @@ public class MField {
 
     public void setNullable(boolean nullable) {
         isNullable = nullable;
+    }
+
+    public void setGetter(Method getter) {
+        this.getter = getter;
+    }
+
+    public void setSetter(Method setter) {
+        this.setter = setter;
+    }
+
+    public Object getValue(Object o) throws InvocationTargetException, IllegalAccessException {
+        return getter.invoke(o);
+    }
+
+    public void setValue(Object o, Object value) throws InvocationTargetException, IllegalAccessException {
+        //todo calendar/time/data
+        setter.invoke(o,value);
     }
 }

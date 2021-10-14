@@ -6,4 +6,5 @@ public @interface Field {
     public Class columnType() default Void.class;
 //    public Class<?> columnType() default Void.class;
     public boolean isNullable() default false;
+    public int length() default 255;
 }

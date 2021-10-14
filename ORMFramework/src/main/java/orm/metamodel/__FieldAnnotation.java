@@ -15,6 +15,7 @@ public class __FieldAnnotation {
     public __FieldAnnotation(Field field) {
 
         //field annotation
+        //todo set annotation to runtime
         var fann = field.getAnnotation(orm.annotations.Field.class);
         if(fann != null){
             fieldName = (fann.fieldName() == null || fann.fieldName().isBlank()) ? field.getName() : fann.fieldName();
@@ -27,18 +28,18 @@ public class __FieldAnnotation {
         var pkann = field.getAnnotation(PrimaryKey.class);
         if(pkann != null){
             isPK = true;
-            fieldName = (pkann.fieldName() == null || pkann.fieldName().isBlank()) ? field.getName() : pkann.fieldName();
+            /*fieldName = (pkann.fieldName() == null || pkann.fieldName().isBlank()) ? field.getName() : pkann.fieldName();
             columnName = (pkann.columnName() == null || pkann.columnName().isBlank()) ? field.getName() : pkann.columnName();
-            columnType = (pkann.columnType() == null || pkann.columnType().equals(Void.class)) ? field.getType() : pkann.columnType();
+            columnType = (pkann.columnType() == null || pkann.columnType().equals(Void.class)) ? field.getType() : pkann.columnType();*/
         }
 
         //foreign key annotation
         var fkann = field.getAnnotation(PrimaryKey.class);
         if(fkann != null){
             isFK = true;
-            fieldName = (fkann.fieldName() == null || fkann.fieldName().isBlank()) ? field.getName() : fkann.fieldName();
+            /*fieldName = (fkann.fieldName() == null || fkann.fieldName().isBlank()) ? field.getName() : fkann.fieldName();
             columnName = (fkann.columnName() == null || fkann.columnName().isBlank()) ? field.getName() : fkann.columnName();
-            columnType = (fkann.columnType() == null || fkann.columnType().equals(Void.class)) ? field.getType() : fkann.columnType();
+            columnType = (fkann.columnType() == null || fkann.columnType().equals(Void.class)) ? field.getType() : fkann.columnType();*/
             if(fann.isNullable()) isNullable = true;
         }
     }

@@ -7,14 +7,17 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MEntity {
+public class _Entity {
 
-    private MField primaryKey;
+    private _Field primaryKey;
+
     private Class<?> member;
-    private String tableName;
-    private MField[] fields;
 
-    public MEntity(Class<?> c) {
+    private String tableName;
+    private _Field[] fields;
+
+    //TODO write own Exception for no getter and setter
+    public _Entity(Class<?> c) throws NoSuchMethodException {
         //TODO annotate annotations for runtime availability
         var cattr = (Entity) c.getAnnotation(Entity.class);
 
@@ -38,12 +41,12 @@ public class MEntity {
             ctmp=ctmp.getSuperclass();
         }
 
-        List<MField> mfields = new ArrayList<>();
+        List<_Field> mfields = new ArrayList<>();
         //TODO: maybe check if getter and setter are available
         for(var field : cfields){
             if(field.getAnnotation(Ignore.class)!=null) continue;
             var annotations = new __FieldAnnotation(field);
-            MField mField = new MField(this, field.getName());
+            _Field mField = new _Field(this, field.getName());
             mField.setColumnType(annotations.getColumnType());
             mField.setColumnName(annotations.getColumnName());
             if(annotations.isPK()){
@@ -55,11 +58,30 @@ public class MEntity {
             }
             mField.setFieldType(field.getType());
             mField.setNullable(annotations.isNullable());
+            var nameCapitalizzed = field.getName().substring(0,1).toUpperCase() + field.getName().substring(1);
+            mField.setGetter(c.getMethod("get" + nameCapitalizzed));
+            mField.setSetter(c.getMethod("set" + nameCapitalizzed));
             mfields.add(mField);
         }
 
-        fields = mfields.toArray(new MField[0]);
+        fields = mfields.toArray(new _Field[0]);
 
 
+    }
+
+    public _Field getPrimaryKey() {
+        return primaryKey;
+    }
+
+    public Class<?> getMember() {
+        return member;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public _Field[] getFields() {
+        return fields;
     }
 }
