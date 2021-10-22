@@ -1,5 +1,6 @@
 package orm.metamodel;
 
+import orm.annotations.ForeignKey;
 import orm.annotations.PrimaryKey;
 
 import java.lang.reflect.Field;
@@ -25,7 +26,7 @@ public class __FieldAnnotation {
         }
 
         //primary key annotation
-        var pkann = field.getAnnotation(PrimaryKey.class);
+        var pkann = field.getAnnotation(orm.annotations.PrimaryKey.class);
         if(pkann != null){
             isPK = true;
             /*fieldName = (pkann.fieldName() == null || pkann.fieldName().isBlank()) ? field.getName() : pkann.fieldName();
@@ -34,7 +35,7 @@ public class __FieldAnnotation {
         }
 
         //foreign key annotation
-        var fkann = field.getAnnotation(PrimaryKey.class);
+        var fkann = field.getAnnotation(ForeignKey.class);
         if(fkann != null){
             isFK = true;
             /*fieldName = (fkann.fieldName() == null || fkann.fieldName().isBlank()) ? field.getName() : fkann.fieldName();

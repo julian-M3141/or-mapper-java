@@ -1,12 +1,17 @@
 package demoapp;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import orm.annotations.*;
 import orm.annotations.Enum;
 
 import java.time.LocalDate;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity(tableName = "persons")
 public class Person {
 
     @PrimaryKey
@@ -16,10 +21,10 @@ public class Person {
     @Field(columnName = "firstname", length = 50, isNullable = false)
     protected String firstname;
 
-    @Field(columnName = "lastname", length = 50, isNullable = false)
+    @Field(columnName = "name", length = 50, isNullable = false)
     protected String lastname;
 
-    @Field(columnName = "sex", isNullable = false, length = 50)
+    @Field(columnName = "gender", isNullable = false, length = 50)
     @Enum(enumType = EnumType.STRING)
     protected Sex sex;
 
