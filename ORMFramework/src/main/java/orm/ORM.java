@@ -16,6 +16,7 @@ public class ORM {
     protected static Connection connection = null;
 
     public static Connection getConnection() throws SQLException {
+        //todo get data from a config file
         if(connection==null){
             DriverManager.getConnection("jdbc:postgresql://localhost:5432/testdb",
                     "testuser", "testpwd");
@@ -23,9 +24,9 @@ public class ORM {
         return connection;
     }
 
-    public static _Entity getEntity(Object object){
-        var c = object instanceof Class<?> ? (Class) object : object.getClass();
 
+    protected static _Entity getEntity(Object object){
+        var c = object instanceof Class<?> ? (Class<?>) object : object.getClass();
         if(!entities.containsKey(c)){
             try {
                 entities.put(c, new _Entity(c));
@@ -43,6 +44,10 @@ public class ORM {
         var entity = getEntity(o);
         if(entity==null) return;
 
+        var insert = new StringBuilder("INSERT INTO " + entity.getTableName() + " (");
+        var values = new StringBuilder("");
+        var valuenames = new StringBuilder("");
+
         List<Object> paramlist = new ArrayList<>();
 
         for(var field : entity.getFields()){
@@ -59,12 +64,17 @@ public class ORM {
             save( entity.getMember().getSuperclass().cast(o));
         }
         var statement = getConnection().prepareStatement(entity.getSQL_INSERT());
+        System.out.println(insert.toString());
+
+        /*var statement = getConnection().prepareStatement(insert.toString());
+
 
         int n = 1;
         for(Object i : paramlist) statement.setObject(n++,i);
 
         statement.execute();
         statement.close();
+        */
     }
 
 
@@ -134,6 +144,7 @@ public class ORM {
     public static <T> T get(Class<T> c, Object pk){
         return (T) createObject(c,pk);
     }
+
 
     public static Object castToSuperclass(Object object){
         return object.getClass().getSuperclass().cast(object);

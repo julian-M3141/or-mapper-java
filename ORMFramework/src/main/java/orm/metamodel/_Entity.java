@@ -25,6 +25,8 @@ public class _Entity {
 
     private final String SQL_UPDATE;
     private final String SQL_DELETE;
+
+
     //TODO write own Exception for no getter and setter
 
     public _Entity(Class<?> c) throws Exception {

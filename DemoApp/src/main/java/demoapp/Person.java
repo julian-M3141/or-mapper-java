@@ -11,7 +11,10 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+<<<<<<< Updated upstream
 @Entity(tableName = "persons")
+=======
+>>>>>>> Stashed changes
 public class Person {
 
     @PrimaryKey
