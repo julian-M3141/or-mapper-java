@@ -64,7 +64,11 @@ public class _Entity {
             mField.setNullable(annotations.isNullable());
             var nameCapitalizzed = field.getName().substring(0,1).toUpperCase() + field.getName().substring(1);
             //todo adapt getter for boolean
-            mField.setGetter(c.getMethod("get" + nameCapitalizzed));
+            if(field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)){
+                mField.setGetter(c.getMethod("is" + nameCapitalizzed));
+            }else {
+                mField.setGetter(c.getMethod("get" + nameCapitalizzed));
+            }
             mField.setSetter(c.getMethod("set" + nameCapitalizzed,field.getType()));
             listOfFields.add(mField);
         }

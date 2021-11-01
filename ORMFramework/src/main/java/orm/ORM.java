@@ -5,9 +5,7 @@ import orm.metamodel._Field;
 
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ORM {
@@ -35,7 +33,6 @@ public class ORM {
                 //todo throw own exception
             }
         }
-
         return entities.get(c);
     }
 
@@ -52,6 +49,7 @@ public class ORM {
 
         int n = 1;
         int numFields = entity.getFields().length;
+        int subtraction = 1;
         for(var field : entity.getFields()){
             Object value = null;
             if(field.isFK()){
@@ -61,8 +59,12 @@ public class ORM {
             }else{
                 value = field.getValue(o);
             }
+
             statement.setObject(n++,value);
-            statement.setObject(field.isPK() ? 2*numFields : n + numFields-1,value);
+            if(field.isPK()){
+                subtraction++;
+            }
+            statement.setObject(field.isPK() ? 2*numFields : n + numFields-subtraction,value);
         }
 
         if(!entity.getMember().getSuperclass().equals(Object.class)){
@@ -87,16 +89,21 @@ public class ORM {
 
         int n = 1;
         int numFields = entity.getFields().length;
+        int subtraction = 1;
         for(var field : entity.getFields()){
+            Object value = null;
             if(field.isFK()){
                 var fk = field.getValue(o);
                 save(fk);
-                statement.setObject(n++,getEntity(fk).getPrimaryKey().getValue(fk));
-                statement.setObject(field.isPK() ? 2*numFields : n + numFields-2,getEntity(fk).getPrimaryKey().getValue(fk));
+                value = getEntity(fk).getPrimaryKey().getValue(fk);
             }else{
-                statement.setObject(n++,field.getValue(o));
-                statement.setObject(field.isPK() ? 2*numFields : n + numFields-2,field.getValue(o));
+                value = field.getValue(o);
             }
+            statement.setObject(n++,value);
+            if(field.isPK()){
+                subtraction++;
+            }
+            statement.setObject(field.isPK() ? 2*numFields : n + numFields-subtraction,value);
         }
 
         if(!entity.getMember().getSuperclass().equals(Object.class)){

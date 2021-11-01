@@ -3,7 +3,6 @@ package demoapp;
 import orm.ORM;
 
 import java.lang.reflect.InvocationTargetException;
-import java.sql.*;
 import java.sql.SQLException;
 import java.time.LocalDate;
 
@@ -20,8 +19,15 @@ public class Main {
         teacher.setSex(Sex.MALE);
         teacher.setHiredate(LocalDate.now());
 
+        var course = new Course();
+        course.setId("12");
+        course.setActive(true);
+        course.setName("course");
+        teacher.setId("1234");
+        course.setTeacher(teacher);
+
         try {
-            ORM.save(teacher);
+            ORM.save(course);
         } catch (InvocationTargetException | IllegalAccessException | SQLException e) {
             e.printStackTrace();
         }
