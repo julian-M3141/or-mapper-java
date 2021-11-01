@@ -20,9 +20,7 @@ public class _Entity {
     private _Field[] fields;
 
     private final String SQL_SELECT;
-
     private final String SQL_INSERT;
-
     private final String SQL_UPDATE;
     private final String SQL_DELETE;
 
@@ -91,8 +89,8 @@ public class _Entity {
                 .collect(Collectors.joining(", "));
 
         SQL_SELECT = "SELECT " + fieldsForSelectAndInsert + " FROM "+tableName+" WHERE "+primaryKey.getColumnName() + "=?;";
-        SQL_UPDATE = "UPDATE " + tableName + " SET "+fieldsForUpdate + " WHERE "+primaryKey.getColumnName() + "=?;";
-        SQL_INSERT = "INSERT INTO "+tableName+ " ("+fieldsForSelectAndInsert+") VALUES ("+"?, ".repeat(fields.length).substring(0,fields.length*3-2)+");";
+        SQL_UPDATE = "ON CONFLICT ("+primaryKey.getColumnName()+") DO UPDATE SET "+fieldsForUpdate + " WHERE " + tableName + "."+primaryKey.getColumnName() + "=?;";
+        SQL_INSERT = "INSERT INTO "+tableName+ " ("+fieldsForSelectAndInsert+") VALUES ("+"?, ".repeat(fields.length).substring(0,fields.length*3-2)+")";
         SQL_DELETE = "DELETE FROM "+tableName+" WHERE "+primaryKey.getColumnName() + "=?;";
     }
     public _Field getPrimaryKey() {
@@ -143,7 +141,7 @@ public class _Entity {
                 _field.setColumnName(annotations.getColumnName());
                 primaryKey = _field;
                 _field.setPK(true);
-                _field.setFK(true);
+                _field.setFK(false);
                 _field.setFieldType(field.getType());
                 _field.setNullable(annotations.isNullable());
                 var nameCapitalizzed = field.getName().substring(0,1).toUpperCase() + field.getName().substring(1);
@@ -151,8 +149,10 @@ public class _Entity {
                 _field.setSetter(c.getMethod("set" + nameCapitalizzed,field.getType()));
                 return _field;
             }
+            //todo check is missing
             tmp = tmp.getSuperclass();
         }
+        //todo upgrade exception
         throw new Exception("Class has no Primary Key!");
     }
 }

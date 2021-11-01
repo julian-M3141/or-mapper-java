@@ -103,7 +103,7 @@ public class _Field {
     }
 
     public Object getValue(Object o) throws InvocationTargetException, IllegalAccessException {
-        return getter.invoke(o);
+        return fieldType.isEnum() ? getter.invoke(o).toString() : getter.invoke(o);
     }
 
     public void setValue(Object o, Object value) throws InvocationTargetException, IllegalAccessException {

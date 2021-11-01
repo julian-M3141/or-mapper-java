@@ -18,14 +18,14 @@ public class ORM {
     public static Connection getConnection() throws SQLException {
         //todo get data from a config file
         if(connection==null){
-            DriverManager.getConnection("jdbc:postgresql://localhost:5432/testdb",
+            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/testdb",
                     "testuser", "testpwd");
         }
         return connection;
     }
 
 
-    protected static _Entity getEntity(Object object){
+    public static _Entity getEntity(Object object){
         var c = object instanceof Class<?> ? (Class<?>) object : object.getClass();
         if(!entities.containsKey(c)){
             try {
@@ -44,37 +44,69 @@ public class ORM {
         var entity = getEntity(o);
         if(entity==null) return;
 
-        var insert = new StringBuilder("INSERT INTO " + entity.getTableName() + " (");
-        var values = new StringBuilder("");
-        var valuenames = new StringBuilder("");
+        var insert = entity.getSQL_INSERT() + " " + entity.getSQL_UPDATE();
 
-        List<Object> paramlist = new ArrayList<>();
 
+        //create prepared statement
+        var statement = getConnection().prepareStatement(insert);
+
+        int n = 1;
+        int numFields = entity.getFields().length;
+        for(var field : entity.getFields()){
+            Object value = null;
+            if(field.isFK()){
+                var fk = field.getValue(o);
+                save(fk);
+                value = getEntity(fk).getPrimaryKey().getValue(fk);
+            }else{
+                value = field.getValue(o);
+            }
+            statement.setObject(n++,value);
+            statement.setObject(field.isPK() ? 2*numFields : n + numFields-1,value);
+        }
+
+        if(!entity.getMember().getSuperclass().equals(Object.class)){
+            save(entity.getMember().getSuperclass(), o);
+        }
+
+        System.out.println(insert);
+
+        statement.execute();
+        statement.close();
+    }
+
+    protected static <T> void save(Class<T> t,Object o) throws SQLException, InvocationTargetException, IllegalAccessException {
+        var entity = getEntity(t);
+        if(entity==null) return;
+
+        var insert = entity.getSQL_INSERT() + " " + entity.getSQL_UPDATE();
+
+
+        //create prepared statement
+        var statement = getConnection().prepareStatement(insert);
+
+        int n = 1;
+        int numFields = entity.getFields().length;
         for(var field : entity.getFields()){
             if(field.isFK()){
                 var fk = field.getValue(o);
                 save(fk);
-                paramlist.add(getEntity(fk).getPrimaryKey().getValue(fk));
+                statement.setObject(n++,getEntity(fk).getPrimaryKey().getValue(fk));
+                statement.setObject(field.isPK() ? 2*numFields : n + numFields-2,getEntity(fk).getPrimaryKey().getValue(fk));
             }else{
-                paramlist.add(field.getValue(o));
+                statement.setObject(n++,field.getValue(o));
+                statement.setObject(field.isPK() ? 2*numFields : n + numFields-2,field.getValue(o));
             }
         }
 
         if(!entity.getMember().getSuperclass().equals(Object.class)){
-            save( entity.getMember().getSuperclass().cast(o));
+            save(entity.getMember().getSuperclass(), o);
         }
-        var statement = getConnection().prepareStatement(entity.getSQL_INSERT());
-        System.out.println(insert.toString());
 
-        /*var statement = getConnection().prepareStatement(insert.toString());
-
-
-        int n = 1;
-        for(Object i : paramlist) statement.setObject(n++,i);
+        System.out.println(insert);
 
         statement.execute();
         statement.close();
-        */
     }
 
 

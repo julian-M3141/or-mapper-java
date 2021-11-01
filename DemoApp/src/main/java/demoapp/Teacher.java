@@ -5,8 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import orm.annotations.Entity;
 import orm.annotations.Field;
-import orm.annotations.Ignore;
-
 import java.time.LocalDate;
 
 
@@ -15,7 +13,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Entity(tableName = "teachers")
 public class Teacher extends Person{
-    @Ignore
+    @Field(columnName = "hdate")
     protected LocalDate hiredate;
 
     @Field(columnName = "salary")

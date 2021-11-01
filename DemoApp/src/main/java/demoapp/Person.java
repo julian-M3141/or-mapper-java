@@ -11,15 +11,12 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-<<<<<<< Updated upstream
 @Entity(tableName = "persons")
-=======
->>>>>>> Stashed changes
 public class Person {
 
     @PrimaryKey
     @Field(columnName = "id")
-    protected long id;
+    protected String id;
 
     @Field(columnName = "firstname", length = 50, isNullable = false)
     protected String firstname;
@@ -31,6 +28,6 @@ public class Person {
     @Enum(enumType = EnumType.STRING)
     protected Sex sex;
 
-    @Ignore
+    @Field(columnName = "bdate", isNullable = true, length = 50)
     protected LocalDate birthdate;
 }
