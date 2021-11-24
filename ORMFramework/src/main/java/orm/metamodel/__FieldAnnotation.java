@@ -12,6 +12,10 @@ public class __FieldAnnotation {
     private boolean isNullable = false;
     private boolean isPK = false;
     private boolean isFK = false;
+    private boolean isManyToMany = false;
+    private boolean isOneToMany = false;
+    private String assignmentTable = "";
+    private String remoteColumnName = "";
 
     public __FieldAnnotation(Field field) {
 
@@ -41,7 +45,18 @@ public class __FieldAnnotation {
             /*fieldName = (fkann.fieldName() == null || fkann.fieldName().isBlank()) ? field.getName() : fkann.fieldName();
             columnName = (fkann.columnName() == null || fkann.columnName().isBlank()) ? field.getName() : fkann.columnName();
             columnType = (fkann.columnType() == null || fkann.columnType().equals(Void.class)) ? field.getType() : fkann.columnType();*/
-            if(fann.isNullable()) isNullable = true;
+            if(fkann.isNullAble()) isNullable = true;
+            if(fkann.columnName() != null && !fkann.columnName().isBlank()){
+                this.columnName = fkann.columnName();
+            }
+            if(fkann.isOneToMany()) {
+                isOneToMany = true;
+            }
+            else if(fkann.isManyToMany()) {
+                isManyToMany = true;
+                assignmentTable = fkann.assignmentTable();
+                remoteColumnName = fkann.remoteColumnName();
+            }
         }
     }
 
@@ -67,5 +82,21 @@ public class __FieldAnnotation {
 
     public boolean isFK() {
         return isFK;
+    }
+
+    public boolean isManyToMany() {
+        return isManyToMany;
+    }
+
+    public boolean isOneToMany() {
+        return isOneToMany;
+    }
+
+    public String getAssignmentTable() {
+        return assignmentTable;
+    }
+
+    public String getRemoteColumnName() {
+        return remoteColumnName;
     }
 }

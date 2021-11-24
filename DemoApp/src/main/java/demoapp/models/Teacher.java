@@ -1,14 +1,14 @@
-package demoapp;
+package demoapp.models;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import orm.annotations.Entity;
 import orm.annotations.Field;
 import java.time.LocalDate;
 
 
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(tableName = "teachers")

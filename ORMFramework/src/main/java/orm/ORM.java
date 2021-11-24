@@ -1,10 +1,15 @@
 package orm;
 
+
 import orm.metamodel._Entity;
 import orm.metamodel._Field;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,6 +17,8 @@ public class ORM {
     protected static Map<Class<?>, _Entity> entities = new HashMap<>();
 
     protected static Connection connection = null;
+
+    protected static ICache cache = new Cache();
 
     public static Connection getConnection() throws SQLException {
         //todo get data from a config file
@@ -36,69 +43,56 @@ public class ORM {
         return entities.get(c);
     }
 
-    //todo also update
+
     public static void save(Object o) throws InvocationTargetException, IllegalAccessException, SQLException {
         var entity = getEntity(o);
         if(entity==null) return;
-
-        var insert = entity.getSQL_INSERT() + " " + entity.getSQL_UPDATE();
-
-
-        //create prepared statement
-        var statement = getConnection().prepareStatement(insert);
-
-        int n = 1;
-        int numFields = entity.getFields().length;
-        int subtraction = 1;
-        for(var field : entity.getFields()){
-            Object value = null;
-            if(field.isFK()){
-                var fk = field.getValue(o);
-                save(fk);
-                value = getEntity(fk).getPrimaryKey().getValue(fk);
-            }else{
-                value = field.getValue(o);
-            }
-
-            statement.setObject(n++,value);
-            if(field.isPK()){
-                subtraction++;
-            }
-            statement.setObject(field.isPK() ? 2*numFields : n + numFields-subtraction,value);
+        if (!cache.hasChanged(o)){
+            //System.out.println("object is in cache and did not change: "+o.toString());
+            return;
         }
+        cache.put(o);
 
-        if(!entity.getMember().getSuperclass().equals(Object.class)){
-            save(entity.getMember().getSuperclass(), o);
-        }
-
-        System.out.println(insert);
-
-        statement.execute();
-        statement.close();
+        saveHelper(entity,o);
     }
 
+    //to save the fields of superclass
     protected static <T> void save(Class<T> t,Object o) throws SQLException, InvocationTargetException, IllegalAccessException {
         var entity = getEntity(t);
         if(entity==null) return;
+        if (!cache.hasChanged(t,o)){
+            //System.out.println("object is in cache: "+o.toString());
+            return;
+        }
+        cache.put(o);
+        saveHelper(entity,o);
+    }
+
+
+    private static void saveHelper(_Entity entity, Object o) throws SQLException, InvocationTargetException, IllegalAccessException {
+
 
         var insert = entity.getSQL_INSERT() + " " + entity.getSQL_UPDATE();
 
 
         //create prepared statement
         var statement = getConnection().prepareStatement(insert);
-
         int n = 1;
-        int numFields = entity.getFields().length;
+        int numFields = entity.getFields().length - entity.getExternals().size();
         int subtraction = 1;
         for(var field : entity.getFields()){
             Object value = null;
             if(field.isFK()){
                 var fk = field.getValue(o);
+                if(field.isOneToMany() || field.isManyToMany()){
+                    continue;
+                }
                 save(fk);
                 value = getEntity(fk).getPrimaryKey().getValue(fk);
             }else{
                 value = field.getValue(o);
             }
+
             statement.setObject(n++,value);
             if(field.isPK()){
                 subtraction++;
@@ -114,6 +108,31 @@ public class ORM {
 
         statement.execute();
         statement.close();
+        for (var external : entity.getExternals()){
+            saveExternals(o, (Collection) external.getValue(o),external);
+        }
+    }
+
+
+    protected static void saveExternals(Object o,Collection<Object> list,_Field field) throws SQLException, InvocationTargetException, IllegalAccessException {
+        if(field.isOneToMany()){
+            for (var value : list){
+                save(value);
+            }
+        }else{
+            var entity = getEntity(o);
+            String command = "INSERT INTO "+field.getAssignmentTable()+" ("+field.getColumnName()+","+field.getRemoteColumnName()+") VALUES (?,?) ON CONFLICT DO NOTHING;";
+
+            var stmt = getConnection().prepareStatement(command);
+            var pk = entity.getPrimaryKey().getValue(o);
+            for(var value : list){
+                var outerEntity = getEntity(value);
+                stmt.setObject(1,pk);
+                stmt.setObject(2,outerEntity.getPrimaryKey().getValue(value));
+                stmt.execute();
+            }
+            stmt.close();
+        }
     }
 
 
@@ -141,11 +160,10 @@ public class ORM {
             //get superclass object from db
             //and copy fields from childobject to parentobject
             if(!entity.getMember().getSuperclass().equals(Object.class)){
-                var parent = (T) createObject(c.getSuperclass(),pk);
-                for(_Field f : getEntity(c).getFields()){
-                    f.setValue(parent,f.getValue(obj));
+                var parent = createObject(c.getSuperclass(),pk);
+                for(_Field f : getEntity(parent).getFields()){
+                    f.setValue(obj,f.getValue(parent));
                 }
-                return parent;
             }
             return obj;
 
@@ -168,7 +186,11 @@ public class ORM {
             for(_Field f : getEntity(c).getFields()){
                 Object val = null;
                 if(f.isFK()){
-                    val = get(f.getFieldType(),rs.getObject(f.getColumnName()));
+                    if(f.isManyToMany() || f.isOneToMany()){
+                        //todo later val = getExternals(f);
+                    }else /*Many To One*/ {
+                        val = get(f.getFieldType(),rs.getObject(f.getColumnName()));
+                    }
                 }else{
                     val = rs.getObject(f.getColumnName());
                 }
@@ -178,6 +200,22 @@ public class ORM {
             e.printStackTrace();
         }
         return obj;
+    }
+
+    private static <T> Collection<T> getExternals(Class<T> t, Object pk, _Field field){
+        if(field.isManyToMany()){
+            StringBuilder sql = new StringBuilder("select")
+                    .append(" from ")
+                    .append(field.getAssignmentTable())
+                    .append(" where ")
+                    .append(field.getColumnName())
+                    .append(" = ?");
+        }
+        StringBuilder sql = new StringBuilder("select values from students where fk = ?");
+        Iterable<T> list = new ArrayList<>();
+
+
+        return null;
     }
 
     public static <T> T get(Class<T> c, Object pk){

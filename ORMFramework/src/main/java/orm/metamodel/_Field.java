@@ -1,7 +1,14 @@
 package orm.metamodel;
 
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+
+import static java.lang.Enum.valueOf;
+
 
 public class _Field {
 
@@ -24,6 +31,14 @@ public class _Field {
     private Method getter = null;
 
     private Method setter = null;
+
+    private String assignmentTable = null;
+
+    private String remoteColumnName = null;
+
+    private boolean manyToMany = false;
+
+    private boolean oneToMany = false;
 
     public _Field(_Entity entity, String name) {
         this.entity = entity;
@@ -107,7 +122,72 @@ public class _Field {
     }
 
     public void setValue(Object o, Object value) throws InvocationTargetException, IllegalAccessException {
-        //todo calendar/time/data
-        setter.invoke(o,value);
+        if(fieldType.isEnum()){
+            Class c = fieldType;
+            var enumvalue = getInstance((String)value,c);
+            setter.invoke(o, enumvalue);
+//            setter.invoke(o, Enum.valueOf( fieldType,(String)value) );
+        }else if(fieldType.equals(LocalDate.class)){
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.S");
+            String date = value.toString();
+            if (date.length() == 10){
+                date += " 00:00:00.0";
+            }
+            try{
+                setter.invoke(o,LocalDate.parse(date,formatter));
+            }catch (DateTimeParseException e){
+                throw new IllegalArgumentException("Cannot parse this value: "+value.getClass()+""+value);
+            }
+
+        }else {
+            setter.invoke(o, value);
+        }
+
+    }
+
+    public String getAssignmentTable() {
+        return assignmentTable;
+    }
+
+    public void setAssignmentTable(String assignmentTable) {
+        this.assignmentTable = assignmentTable;
+    }
+
+    public String getRemoteColumnName() {
+        return remoteColumnName;
+    }
+
+    public void setRemoteColumnName(String remoteColumnName) {
+        this.remoteColumnName = remoteColumnName;
+    }
+
+    public boolean isManyToMany() {
+        return manyToMany;
+    }
+
+    public void setManyToMany(boolean manyToMany) {
+        this.manyToMany = manyToMany;
+    }
+
+    public boolean isOneToMany() {
+        return oneToMany;
+    }
+
+    public void setOneToMany(boolean oneToMany) {
+        this.oneToMany = oneToMany;
+    }
+
+    public Method getSetter() {
+        return setter;
+    }
+
+    public Method getGetter() {
+        return getter;
+    }
+    private static <T extends Enum<T>> Object getInstance(String value,Class<T> t){
+        if(t.isEnum()){
+            return Enum.valueOf(t,value);
+        }
+        throw new IllegalArgumentException("wrong argument");
     }
 }

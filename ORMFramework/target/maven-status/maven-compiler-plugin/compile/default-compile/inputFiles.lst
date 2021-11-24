@@ -1,0 +1,13 @@
+/home/julian/Dokumente/FH/swe3/or-mapper-java/ORMFramework/src/main/java/orm/metamodel/__FieldAnnotation.java
+/home/julian/Dokumente/FH/swe3/or-mapper-java/ORMFramework/src/main/java/orm/metamodel/_Field.java
+/home/julian/Dokumente/FH/swe3/or-mapper-java/ORMFramework/src/main/java/orm/annotations/EnumType.java
+/home/julian/Dokumente/FH/swe3/or-mapper-java/ORMFramework/src/main/java/orm/annotations/Field.java
+/home/julian/Dokumente/FH/swe3/or-mapper-java/ORMFramework/src/main/java/orm/ICache.java
+/home/julian/Dokumente/FH/swe3/or-mapper-java/ORMFramework/src/main/java/orm/ORM.java
+/home/julian/Dokumente/FH/swe3/or-mapper-java/ORMFramework/src/main/java/orm/annotations/Enum.java
+/home/julian/Dokumente/FH/swe3/or-mapper-java/ORMFramework/src/main/java/orm/metamodel/_Entity.java
+/home/julian/Dokumente/FH/swe3/or-mapper-java/ORMFramework/src/main/java/orm/annotations/Entity.java
+/home/julian/Dokumente/FH/swe3/or-mapper-java/ORMFramework/src/main/java/orm/annotations/Ignore.java
+/home/julian/Dokumente/FH/swe3/or-mapper-java/ORMFramework/src/main/java/orm/annotations/PrimaryKey.java
+/home/julian/Dokumente/FH/swe3/or-mapper-java/ORMFramework/src/main/java/orm/annotations/ForeignKey.java
+/home/julian/Dokumente/FH/swe3/or-mapper-java/ORMFramework/src/main/java/orm/Cache.java

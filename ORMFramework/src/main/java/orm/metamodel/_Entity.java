@@ -59,17 +59,21 @@ public class _Entity {
             }
             if(annotations.isFK()){
                 mField.setFK(true);
+                mField.setManyToMany(annotations.isManyToMany());
+                mField.setOneToMany(annotations.isOneToMany());
+                mField.setAssignmentTable(annotations.getAssignmentTable());
+                mField.setRemoteColumnName(annotations.getRemoteColumnName());
             }
             mField.setFieldType(field.getType());
             mField.setNullable(annotations.isNullable());
-            var nameCapitalizzed = field.getName().substring(0,1).toUpperCase() + field.getName().substring(1);
+            var nameCapitalized = field.getName().substring(0,1).toUpperCase() + field.getName().substring(1);
             //todo adapt getter for boolean
             if(field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)){
-                mField.setGetter(c.getMethod("is" + nameCapitalizzed));
+                mField.setGetter(c.getMethod("is" + nameCapitalized));
             }else {
-                mField.setGetter(c.getMethod("get" + nameCapitalizzed));
+                mField.setGetter(c.getMethod("get" + nameCapitalized));
             }
-            mField.setSetter(c.getMethod("set" + nameCapitalizzed,field.getType()));
+            mField.setSetter(c.getMethod("set" + nameCapitalized,field.getType()));
             listOfFields.add(mField);
         }
 
@@ -84,17 +88,19 @@ public class _Entity {
 
         //set sql commands
         var fieldsForSelectAndInsert = Arrays.stream(fields)
+                .filter(x -> !(x.isOneToMany() || x.isManyToMany()))
                 .map(_Field::getColumnName)
                 .collect(Collectors.joining(", "));
         var fieldsForUpdate = Arrays.stream(fields)
-                .filter(x -> !x.isPK())
+                .filter(x -> !x.isPK() && !(x.isOneToMany() || x.isManyToMany()))
                 .map(_Field::getColumnName)
                 .map(x -> x+"=?")
                 .collect(Collectors.joining(", "));
+        var size = fields.length - getExternals().size();
 
         SQL_SELECT = "SELECT " + fieldsForSelectAndInsert + " FROM "+tableName+" WHERE "+primaryKey.getColumnName() + "=?;";
         SQL_UPDATE = "ON CONFLICT ("+primaryKey.getColumnName()+") DO UPDATE SET "+fieldsForUpdate + " WHERE " + tableName + "."+primaryKey.getColumnName() + "=?;";
-        SQL_INSERT = "INSERT INTO "+tableName+ " ("+fieldsForSelectAndInsert+") VALUES ("+"?, ".repeat(fields.length).substring(0,fields.length*3-2)+")";
+        SQL_INSERT = "INSERT INTO "+tableName+ " ("+fieldsForSelectAndInsert+") VALUES ("+"?, ".repeat(size).substring(0,size*3-2)+")";
         SQL_DELETE = "DELETE FROM "+tableName+" WHERE "+primaryKey.getColumnName() + "=?;";
     }
     public _Field getPrimaryKey() {
@@ -118,6 +124,14 @@ public class _Entity {
                 .filter(_Field::isFK)
                 .collect(Collectors.toList());
     }
+
+    public List<_Field> getExternals(){
+        return Arrays.stream(fields)
+                .filter(x -> (x.isManyToMany() || x.isOneToMany()))
+                .collect(Collectors.toList());
+    }
+
+
     public String getSQL_SELECT() {
         return SQL_SELECT;
     }

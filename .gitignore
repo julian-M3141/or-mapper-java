@@ -24,3 +24,7 @@ hs_err_pid*
 
 # intellij-file
 *.iml
+
+*target/*
+
+ideas.txt

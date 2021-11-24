@@ -1,87 +1,54 @@
 package demoapp;
 
-import orm.ORM;
+import demoapp.samples.ShowSave;
+import demoapp.samples.ShowSelect;
 
 import java.lang.reflect.InvocationTargetException;
-import java.sql.SQLException;
-import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
+
 
 public class Main {
 
+    private static Map<Class<?>, Map<String,Object>> enums = new HashMap<>();
+
     
     public static void main(String[] args){
-        var teacher = new Teacher();
-        teacher.setId("123L");
-        teacher.setFirstname("Max");
-        teacher.setLastname("Musterlehrer1");
-        teacher.setBirthdate(LocalDate.of(1970,1,1));
-        teacher.setSalary(1234);
-        teacher.setSex(Sex.MALE);
-        teacher.setHiredate(LocalDate.now());
 
-        var course = new Course();
-        course.setId("12");
-        course.setActive(true);
-        course.setName("course");
-        teacher.setId("1234");
-        course.setTeacher(teacher);
+        //start database (only works with docker installed)
+
+        List<String> list = new ArrayList<>();
+
+        Class<?> c = list.getClass();
 
         try {
-            ORM.save(course);
-        } catch (InvocationTargetException | IllegalAccessException | SQLException e) {
+            var newlist = (Collection<Object>)c.getConstructor().newInstance();
+            Object o = new String("test");
+
+            newlist.add(o);
+
+
+            System.out.println(new ArrayList<>(newlist));
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
 
-
-//        worked
-//        var person = new Person("1234","max1","mustermann1",Sex.MALE,LocalDate.of(1970,1,2));
-//        try {
-//            ORM.save(person);
-//        } catch (InvocationTargetException | IllegalAccessException | SQLException e) {
-//            e.printStackTrace();
-//        }
-
-//        var teacher =  new Teacher(LocalDate.now(),1234);
-//        System.out.println(ORM.getEntity(person).getSQL_SELECT());
-//        System.out.println(ORM.getEntity(person).getSQL_UPDATE());
-//        System.out.println(ORM.getEntity(person).getSQL_INSERT());
-//        System.out.println(ORM.getEntity(person).getSQL_DELETE());
-//
-//        System.out.println(ORM.getEntity(teacher).getSQL_SELECT());
-//        System.out.println(ORM.getEntity(teacher).getSQL_UPDATE());
-//        System.out.println(ORM.getEntity(teacher).getSQL_INSERT());
-//        System.out.println(ORM.getEntity(teacher).getSQL_DELETE());
-//
-//        System.out.println(ORM.getEntity(((Person) teacher)).getSQL_INSERT());
+//        ShowSave.show();
+//        ShowSelect.show();
 
 
 
-//        var person = new Person(123L,"max","mustermann",Sex.MALE,LocalDate.now());
-//        try {
-//            var conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/testdb",
-//                    "testuser", "testpwd");
-//
-//            String sql = "INSERT INTO persons values (?,?,?,?,?)"+
-//                    " ON CONFLICT (id)"+
-//                    " DO UPDATE SET name = ? where persons.id = ?;";
-//
-//            var stmt = conn.prepareStatement(sql);
-//
-//            stmt.setObject(1,"123");
-//            stmt.setObject(2,"nachname");
-//            stmt.setObject(3,"vorname");
-//            stmt.setObject(4,"MALE");
-//            stmt.setDate(5,Date.valueOf(LocalDate.now()));
-//            stmt.setObject(6,"neuerneuernachname");
-//            stmt.setObject(7,"123");
-//
-//            stmt.execute();
-//
-//
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
+
 
 
     }
+
+
+
 }

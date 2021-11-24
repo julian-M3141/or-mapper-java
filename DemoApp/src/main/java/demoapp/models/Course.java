@@ -1,15 +1,18 @@
-package demoapp;
+package demoapp.models;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import orm.annotations.*;
-import orm.annotations.Enum;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity(tableName = "courses")
 public class Course {
     @PrimaryKey
@@ -26,6 +29,7 @@ public class Course {
     @Field(columnName = "fk_teacher")
     protected Teacher teacher;
 
-    @Ignore
-    protected List<Student> students;
+
+    @ForeignKey(assignmentTable = "student_courses", columnName = "fk_course", remoteColumnName = "fk_student",isManyToMany = true)
+    protected List<Student> students = new ArrayList<>();
 }

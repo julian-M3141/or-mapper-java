@@ -1,0 +1,34 @@
+package demoapp.models;
+
+
+import lombok.*;
+import orm.annotations.Entity;
+import orm.annotations.Field;
+import orm.annotations.ForeignKey;
+import orm.annotations.PrimaryKey;
+
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity(tableName = "classes")
+public class MyClass {
+
+    @PrimaryKey
+    @Field(columnName = "id")
+    protected String id;
+
+    @Field(columnName = "name", length = 50)
+    protected String name;
+
+    @ForeignKey
+    @Field(columnName = "fk_teacher")
+    protected Teacher teacher;
+
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ForeignKey(isOneToMany = true, remoteColumnName = "fk_class")
+    @Field
+    List<Student> students;
+}

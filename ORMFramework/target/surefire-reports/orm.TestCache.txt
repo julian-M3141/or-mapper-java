@@ -1,0 +1,22 @@
+-------------------------------------------------------------------------------
+Test set: orm.TestCache
+-------------------------------------------------------------------------------
+Tests run: 4, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.024 sec <<< FAILURE!
+orm.TestCache.testContainsTrue()  Time elapsed: 0.001 sec  <<< FAILURE!
+java.lang.NullPointerException: Cannot invoke "Object.getClass()" because "o" is null
+	at orm.Cache.contains(Cache.java:40)
+	at orm.TestCache.testContainsTrue(TestCache.java:37)
+
+orm.TestCache.testContainsTrue2()  Time elapsed: 0.007 sec  <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
+	at org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:55)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:40)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:35)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:179)
+	at orm.TestCache.testContainsTrue2(TestCache.java:42)
+
+orm.TestCache.testContainsFalse()  Time elapsed: 0.016 sec  <<< FAILURE!
+java.lang.NullPointerException: Cannot invoke "orm.metamodel._Entity.getPrimaryKey()" because the return value of "orm.ORM.getEntity(Object)" is null
+	at orm.Cache.contains(Cache.java:40)
+	at orm.TestCache.testContainsFalse(TestCache.java:47)
+
