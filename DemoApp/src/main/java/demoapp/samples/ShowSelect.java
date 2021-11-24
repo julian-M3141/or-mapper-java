@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.zip.CheckedOutputStream;
 
 public class ShowSelect {
     public static void show(){
@@ -27,26 +28,23 @@ public class ShowSelect {
         System.out.println(teacher);
 
 
-        System.out.println("\n\n[2.3] Show select with fk (one to many)");
+        System.out.println("\n\n[2.3] Show select with fk (one to many and many to one) ");
         System.out.println("######################################\n");
         //show one to many
         var myClass = ORM.get(MyClass.class,"c.1");
 
         System.out.println(myClass);
-//
-//
-//
-//
-//        //show many to many
-//
-//        System.out.println("\n\n[1.5] Show save with fk (many to many)");
-//        System.out.println("######################################\n");
-//        course.setStudents(List.of(student1,student2));
-//
-//        try {
-//            ORM.save(course);
-//        } catch (InvocationTargetException | IllegalAccessException | SQLException e) {
-//            e.printStackTrace();
-//        }
+
+        System.out.println(myClass.getStudents());
+
+
+        //show many to many
+
+        System.out.println("\n\n[2.4] Show save with fk (many to many)");
+        System.out.println("######################################\n");
+
+        var course = ORM.get(Course.class, "12");
+
+        System.out.println(course);
     }
 }

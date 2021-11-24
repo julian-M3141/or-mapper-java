@@ -35,29 +35,4 @@ sql in entity class:
     * überlegen ob fks löschen
 
 
----------------------------------------------------------
-one to many
-
-table 1 : 1 ------- n : table 2
-@fk(remotetable=table2,remotecolumnname=fk)
-list<table2>
-for i in table2s :  insert into table2 values (this.pk, table2values)
-select * from table2 where fk = this.pk
-
----------------------------------------------------------
-done
-many to one
-
-table 1 : n ------- 1 : table 2
-table2
-
----------------------------------------------------------
-many to many
-
-table 1 : m ------- n : table 2
-@fk(remotetable=middletable,remotecolumnname=fk)
-list<table2>
-for i in table2s :  insert into middletable values (this.pk, table2.pk)
-list of keys = select table2fk from middletable where table1fk = this.pk
-select * from table2 where pk in list of keys
-
+* todo save on many to many better update

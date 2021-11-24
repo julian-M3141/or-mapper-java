@@ -4,14 +4,11 @@ package orm;
 import orm.metamodel._Entity;
 import orm.metamodel._Field;
 
-import java.lang.reflect.Field;
+import javax.sound.midi.Soundbank;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ParameterizedType;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ORM {
     protected static Map<Class<?>, _Entity> entities = new HashMap<>();
@@ -19,6 +16,15 @@ public class ORM {
     protected static Connection connection = null;
 
     protected static ICache cache = new Cache();
+
+    //setter and getter for cache
+    public static ICache getCache() {
+        return cache;
+    }
+
+    public static void setCache(ICache cache) {
+        ORM.cache = cache;
+    }
 
     public static Connection getConnection() throws SQLException {
         //todo get data from a config file
@@ -138,6 +144,9 @@ public class ORM {
 
     //creates object from primary key
     protected static <T> Object createObject(Class<T> c, Object pk) {
+        if(cache.contains(c,pk)){
+            return cache.get(c,pk);
+        }
         var entity = getEntity(c);
 
         var sql = entity.getSQL_SELECT();
@@ -152,7 +161,7 @@ public class ORM {
             //execute query
             ResultSet rs = statement.executeQuery();
             if(rs.next()){
-                obj = createObject(c,pk,rs);
+                obj = createObjectFromResultSet(c,pk,rs);
             }
 
             //inheritance
@@ -165,6 +174,7 @@ public class ORM {
                     f.setValue(obj,f.getValue(parent));
                 }
             }
+            cache.put(obj);
             return obj;
 
 
@@ -178,7 +188,10 @@ public class ORM {
 
 
     //creates object from resultset from sql query
-    private static Object createObject(Class<?> c, Object pk, ResultSet rs) {
+    private static Object createObjectFromResultSet(Class<?> c,Object pk, ResultSet rs) {
+        if(cache.contains(c,pk)){
+            return cache.get(c,pk);
+        }
         //create new object
         Object obj = null;
         try {
@@ -187,8 +200,9 @@ public class ORM {
                 Object val = null;
                 if(f.isFK()){
                     if(f.isManyToMany() || f.isOneToMany()){
-                        //todo later val = getExternals(f);
-                    }else /*Many To One*/ {
+//                        val = getExternals(f.getColumnType(),pk,f);
+                        continue;
+                    }else /*Many To One or One to One*/ {
                         val = get(f.getFieldType(),rs.getObject(f.getColumnName()));
                     }
                 }else{
@@ -199,23 +213,65 @@ public class ORM {
         } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | SQLException e) {
             e.printStackTrace();
         }
+        cache.put(obj);
+
+        for(var field : getEntity(c).getExternals()){
+            try {
+                field.setValue(obj,getExternals(field.getColumnType(),pk,field));
+            } catch (InvocationTargetException | IllegalAccessException | SQLException | NoSuchMethodException | InstantiationException e) {
+                e.printStackTrace();
+            }
+        }
+
         return obj;
     }
 
-    private static <T> Collection<T> getExternals(Class<T> t, Object pk, _Field field){
+    private static <T> Collection<T> getExternals(Class<T> t, Object pk, _Field field) throws SQLException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         if(field.isManyToMany()){
-            StringBuilder sql = new StringBuilder("select")
-                    .append(" from ")
-                    .append(field.getAssignmentTable())
-                    .append(" where ")
+            Collection<T> list = new ArrayList<T>();
+            String sql = new StringBuilder("SELECT ")
                     .append(field.getColumnName())
-                    .append(" = ?");
+                    .append(", ")
+                    .append(field.getRemoteColumnName())
+                    .append(" FROM ")
+                    .append(field.getAssignmentTable())
+                    .append(" WHERE ")
+                    .append(field.getColumnName())
+                    .append(" = ?;")
+                    .toString();
+            PreparedStatement stmt = getConnection().prepareStatement(sql);
+            stmt.setObject(1,pk);
+            System.out.println(sql);
+            ResultSet resultSet = stmt.executeQuery();
+            while (resultSet.next()){
+                list.add((T) createObject(t,resultSet.getObject(field.getRemoteColumnName())));
+            }
+            return list;
+
+        }else{
+            Collection<T> list = new ArrayList<T>();
+            String sql = new StringBuilder("SELECT ")
+                    .append(
+                            Arrays.stream(getEntity(t).getFields())
+                                    .filter(x -> !(x.isManyToMany()) || x.isOneToMany())
+                                    .map(_Field::getColumnName)
+                                    .collect(Collectors.joining(", "))
+                    )
+                    .append(" FROM ")
+                    .append(getEntity(t).getTableName())
+                    .append(" WHERE ")
+                    .append(field.getRemoteColumnName())
+                    .append("=?;")
+                    .toString();
+            System.out.println(sql);
+            PreparedStatement stmt = getConnection().prepareStatement(sql);
+            stmt.setObject(1,pk);
+            ResultSet resultSet = stmt.executeQuery();
+            while (resultSet.next()){
+                list.add((T) createObjectFromResultSet(t,resultSet.getObject(getEntity(t).getPrimaryKey().getColumnName()),resultSet));
+            }
+            return list;
         }
-        StringBuilder sql = new StringBuilder("select values from students where fk = ?");
-        Iterable<T> list = new ArrayList<>();
-
-
-        return null;
     }
 
     public static <T> T get(Class<T> c, Object pk){

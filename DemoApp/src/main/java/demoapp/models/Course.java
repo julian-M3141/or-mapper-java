@@ -30,6 +30,10 @@ public class Course {
     protected Teacher teacher;
 
 
-    @ForeignKey(assignmentTable = "student_courses", columnName = "fk_course", remoteColumnName = "fk_student",isManyToMany = true)
+    @ForeignKey(assignmentTable = "student_courses",
+            columnName = "fk_course",
+            remoteColumnName = "fk_student",
+            isManyToMany = true,
+            columnType = Student.class)
     protected List<Student> students = new ArrayList<>();
 }

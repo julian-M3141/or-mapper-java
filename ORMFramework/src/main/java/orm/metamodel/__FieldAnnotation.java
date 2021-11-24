@@ -42,15 +42,13 @@ public class __FieldAnnotation {
         var fkann = field.getAnnotation(ForeignKey.class);
         if(fkann != null){
             isFK = true;
-            /*fieldName = (fkann.fieldName() == null || fkann.fieldName().isBlank()) ? field.getName() : fkann.fieldName();
-            columnName = (fkann.columnName() == null || fkann.columnName().isBlank()) ? field.getName() : fkann.columnName();
-            columnType = (fkann.columnType() == null || fkann.columnType().equals(Void.class)) ? field.getType() : fkann.columnType();*/
+            if(fieldName.equals("")) fieldName = (fkann.fieldName() == null || fkann.fieldName().isBlank()) ? field.getName() : fkann.fieldName();
+            if(columnName.equals("")) columnName = (fkann.columnName() == null || fkann.columnName().isBlank()) ? field.getName() : fkann.columnName();
+            if(!(fkann.columnType() == null || fkann.columnType().equals(Void.class))) columnType = fkann.columnType();
             if(fkann.isNullAble()) isNullable = true;
-            if(fkann.columnName() != null && !fkann.columnName().isBlank()){
-                this.columnName = fkann.columnName();
-            }
             if(fkann.isOneToMany()) {
                 isOneToMany = true;
+                remoteColumnName = fkann.remoteColumnName();
             }
             else if(fkann.isManyToMany()) {
                 isManyToMany = true;

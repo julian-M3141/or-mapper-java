@@ -27,8 +27,8 @@ public class MyClass {
     protected Teacher teacher;
 
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    @ForeignKey(isOneToMany = true, remoteColumnName = "fk_class")
+    @EqualsAndHashCode.Exclude  // without, equal would be infinitely circular
+    @ForeignKey(isOneToMany = true, remoteColumnName = "fk_class", columnType = Student.class)
     @Field
     List<Student> students;
 }
