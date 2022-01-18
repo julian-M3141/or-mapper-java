@@ -1,16 +1,13 @@
 package demoapp.samples;
 
 import demoapp.models.*;
+import orm.Cache;
 import orm.ORM;
-
-import java.lang.reflect.InvocationTargetException;
-import java.sql.SQLException;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.zip.CheckedOutputStream;
 
 public class ShowSelect {
     public static void show(){
+        ORM.setCache(new Cache());
+        System.out.println();
         System.out.println("[2] Demonstrate select");
         System.out.println("######################################\n");
 
@@ -28,6 +25,9 @@ public class ShowSelect {
         System.out.println(teacher);
 
 
+        //empty cache
+        ORM.setCache(new Cache());
+
         System.out.println("\n\n[2.3] Show select with fk (one to many and many to one) ");
         System.out.println("######################################\n");
         //show one to many
@@ -43,6 +43,7 @@ public class ShowSelect {
         System.out.println("\n\n[2.4] Show save with fk (many to many)");
         System.out.println("######################################\n");
 
+        ORM.setCache(new Cache());
         var course = ORM.get(Course.class, "12");
 
         System.out.println(course);

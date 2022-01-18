@@ -1,38 +1,15 @@
 
-
-inheritance:
-single table
-joined table <----
-table per class
-
-sql in entity class:
-* insert:
-    x insert into tablename (cloumn1,...) values (?,...); //single class without inheritance and foreign keys
-    x save primary key
-        insert into parent_tablename (column1,...) values (?,...);
-        ...
-        insert into child_tablename (column1,...) values (?,...);
-    * with fk
-        first insert all other values
-* update
-    x update tablename set column=? where pk = ?;
-    x with inheritance
-        update parent_tablename set column=? where pk = ?;
-        update child_tablename set column=? where pk = ?;
-    * with fk
-        update first all other values
-* select
-    x select column,... from tablename;
-    * with inheritance
-        select column,... from parent_tablename
-        join child_tablename
-        on parent_tablename.primarykey = child_tablename.primarykey;
-    x with foreign key
-        nach select alle anderen durch ein get<Object>(pk)
-* delete
-    x delete from tablename where pk = ?;
-    * "von unten nach oben löschen"
-    * überlegen ob fks löschen
-
-
 * todo save on many to many better update
+* todo write unit/integration tests
+
+* todo : änderungsverfolgung
+* todo : locking
+* todo beliebige abfragen
+* todo direkte objektzugriffe
+* todo fluent api
+* todo features (tabellen erstellen, .. )
+* todo unit tests
+
+
+* todo caching verbessern
+* todo dokumentation

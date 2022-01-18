@@ -57,6 +57,9 @@ public class Cache implements ICache {
 
     @Override
     public boolean hasChanged(Object o) throws InvocationTargetException, IllegalAccessException {
+        // todo deep copy
+        System.out.println("after: "+o);
+        System.out.println("before "+get(o.getClass(),ORM.getEntity(o).getPrimaryKey().getValue(o)));
         return !(contains(o) && get(o.getClass(),ORM.getEntity(o).getPrimaryKey().getValue(o)).equals(o));
     }
 
@@ -81,4 +84,5 @@ public class Cache implements ICache {
         }
         return null;
     }
+
 }
