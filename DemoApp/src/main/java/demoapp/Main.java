@@ -6,6 +6,7 @@ import demoapp.samples.ShowSave;
 import demoapp.samples.ShowSelect;
 import demoapp.samples.ShowUpdate;
 import orm.Cache;
+import orm.ORDER;
 import orm.ORM;
 
 import java.lang.reflect.InvocationTargetException;
@@ -21,13 +22,21 @@ public class Main {
         //start database with docker compose (db folder) (only works with docker installed)
 
         try {
-            var person = ORM.query("SELECT * from students WHERE id = 'st1';")
+            var person = ORM.query("SELECT * from students WHERE id = 'st1'")
                     .executeQueryOne(Student.class);
             System.out.println(person);
 
-            var persons = ORM.query("SELECT * from students;")
+            var persons = ORM.query("SELECT * from students")
                     .executeQueryMany(Student.class);
             System.out.println(persons);
+
+            /*var irgendwas = ORM.query("select * from persons")
+                    .where("id").equalTo("st1")
+                    .executeQueryOne(Person.class);
+
+            var somesing = ORM.query("select * form persons")
+                    .orderBy("bdate", ORDER.ASC)
+                    .executeQueryMany(int.class);*/
 
 
         } catch (SQLException e) {

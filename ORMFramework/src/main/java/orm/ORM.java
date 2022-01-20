@@ -352,6 +352,12 @@ public class ORM {
         return new QueryObject(command);
     }
 
+    public static QueryObject get(Class<?> c){
+        var tablename = getEntity(c).getTableName();
+        var sql = "SELECT * FROM "+tablename;
+        return new QueryObject(c,sql);
+    }
+
     //package private
     static <T> T executeQueryOne(Class<T> c, QueryObject queryObject) throws SQLException {
         PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
@@ -380,4 +386,8 @@ public class ORM {
     }
 
 
+    public static <T> void execute(Class<T> c, QueryObject queryObject) throws SQLException {
+        PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
+        stmt.execute();
+    }
 }

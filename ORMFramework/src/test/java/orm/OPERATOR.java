@@ -1,0 +1,5 @@
+package orm;
+
+public enum OPERATOR {
+    GREATER,GREATEREQUAL,SMALLER,SMALLEREQUAL,IN
+}
