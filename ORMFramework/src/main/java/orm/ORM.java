@@ -353,13 +353,48 @@ public class ORM {
     }
 
     public static QueryObject get(Class<?> c){
-        var tablename = getEntity(c).getTableName();
-        var sql = "SELECT * FROM "+tablename;
+        final var tablename = getEntity(c).getTableName();
+        if(c.getSuperclass().equals(Object.class)){
+            var sql = "SELECT * FROM "+tablename;
+            return new QueryObject(c,sql);
+        }
+        //inheritance requires more complex query cosntruction
+        var tmp = c;
+        var id = getEntity(c).getPrimaryKey().getColumnName();
+        var fields = Arrays.stream(getEntity(c).getFields())
+                .map(x -> tablename+"."+x.getColumnName())
+                .collect(Collectors.toList());
+        String joins  = "";
+
+        // get joins and field names for superclasses
+        while(!tmp.getSuperclass().equals(Object.class)){
+            tmp = tmp.getSuperclass();
+            var entity = getEntity(tmp);
+            fields.addAll(Arrays.stream(entity.getFields())
+                    .filter(x -> !x.isPK())
+                    .map(x -> entity.getTableName()+"."+x.getColumnName())
+                    .collect(Collectors.toList()));
+            joins += " INNER JOIN "+entity.getTableName() + " ON "+tablename+"."+id+"="+entity.getTableName()+"."+entity.getPrimaryKey().getName();
+        }
+
+        //filter out distinct columnnames
+        var fieldsFiltered = fields.stream()
+                .distinct()
+                .map(x -> {
+                    if(x.equals(id)){
+                        return tablename+"."+x;
+                    }else{
+                        return x;
+                    }
+                })
+                .collect(Collectors.toList());
+        var sql = "SELECT "+ String.join(", ", fieldsFiltered)+" FROM "+tablename+joins;
         return new QueryObject(c,sql);
     }
 
     //package private
     static <T> T executeQueryOne(Class<T> c, QueryObject queryObject) throws SQLException {
+        System.out.println(queryObject.getSQL());
         PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
         ResultSet resultSet = stmt.executeQuery();
 
@@ -373,6 +408,7 @@ public class ORM {
     }
 
     static <T> List<T> executeQueryMany(Class<T> c, QueryObject queryObject) throws SQLException {
+        System.out.println(queryObject.getSQL());
         PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
         ResultSet resultSet = stmt.executeQuery();
         List<T> result = new ArrayList<>();
@@ -389,5 +425,18 @@ public class ORM {
     public static <T> void execute(Class<T> c, QueryObject queryObject) throws SQLException {
         PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
         stmt.execute();
+    }
+
+    public static int count(QueryObject queryObject) throws SQLException {
+        System.out.println(queryObject.getSQL());
+        PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
+        ResultSet resultSet = stmt.executeQuery();
+
+        if(resultSet.next()){
+            //get the primary key, else object cannot be initiated
+            int count = resultSet.getInt(1);
+            return count;
+        }
+        return -1;
     }
 }

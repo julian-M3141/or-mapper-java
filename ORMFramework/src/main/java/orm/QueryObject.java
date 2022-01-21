@@ -4,7 +4,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 public class QueryObject {
-    private final StringBuilder command = new StringBuilder();
+    private StringBuilder command = new StringBuilder();
     private Class<?> c = null;
 
     private boolean condition = false;
@@ -40,27 +40,39 @@ public class QueryObject {
         addSQL(sql);
     }
 
+    private Object setStringParenthisis(Object o){
+        if(o.getClass().equals(String.class) || o.getClass().equals(Character.class)){
+            return "'" + o + "'";
+        }
+        return o;
+    }
+
     public QueryObject greaterThan(String columnname, Object value){
+        value = setStringParenthisis(value);
         addCondition(" " + columnname + " > "+value);
         return this;
     }
 
     public QueryObject greaterEqualThan(String columnname, Object value){
+        value = setStringParenthisis(value);
         addCondition(" " + columnname + " >= "+value);
         return this;
     }
 
     public QueryObject smallerThan(String columnname, Object value){
+        value = setStringParenthisis(value);
         addCondition(" " + columnname + " < "+value);
         return this;
     }
 
     public QueryObject smallerEqualThan(String columnname, Object value){
+        value = setStringParenthisis(value);
         addCondition(" " + columnname + " <= "+value);
         return this;
     }
 
     public QueryObject equalTo(String columnname, Object value){
+        value = setStringParenthisis(value);
         addCondition(" " + columnname + " = "+value);
         return this;
     }
@@ -101,12 +113,15 @@ public class QueryObject {
     }
 
     public QueryObject between(String columnname, Object value1, Object value2){
+        value1 = setStringParenthisis(value1);
+        value2 = setStringParenthisis(value2);
         addCondition(" "+columnname+" BETWEEN "+value1+" AND "+value2);
         return this;
     }
 
 
 
+    //todo better query for inheritance
 
     public <T> T executeQueryOne(Class<T> c) throws SQLException{
         return ORM.executeQueryOne(c,this);
@@ -117,5 +132,33 @@ public class QueryObject {
 
     public <T> void execute(Class<T> c) throws SQLException {
         ORM.execute(c,this);
+    }
+
+    public Object executeQueryOne() throws SQLException{
+        if(c == null){
+            throw new NullPointerException("Class not defined");
+        }
+        return ORM.executeQueryOne(c,this);
+    }
+    public List<?> executeQueryMany() throws SQLException{
+        if(c == null){
+            throw new NullPointerException("Class not defined");
+        }
+        return ORM.executeQueryMany(c,this);
+    }
+
+    public void execute() throws SQLException {
+        if(c == null){
+            throw new NullPointerException("Class not defined");
+        }
+        ORM.execute(c,this);
+    }
+
+    public int count() throws SQLException {
+        if(c == null){
+            throw new NullPointerException("Class not defined");
+        }
+        command = new StringBuilder("SELECT count(*) FROM "+ORM.getEntity(c).getTableName());
+        return ORM.count(this);
     }
 }

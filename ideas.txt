@@ -4,12 +4,12 @@
 
 * todo : änderungsverfolgung
 * todo : locking
-* todo beliebige abfragen
 * todo direkte objektzugriffe
-* todo fluent api
+* todo fluent api tests
 * todo features (tabellen erstellen, .. )
 * todo unit tests
 
 
 * todo caching verbessern
 * todo dokumentation
+* todo add javadoc

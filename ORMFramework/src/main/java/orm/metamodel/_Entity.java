@@ -79,6 +79,7 @@ public class _Entity {
 
 
         //for inheritence set primary key of superclass as pk for child class
+        System.out.println(member.getName());
         if(!member.getSuperclass().equals(Object.class) && primaryKey == null){
             var pk = getPrimaryKeyFromSuperClass(member);
             primaryKey = pk;
