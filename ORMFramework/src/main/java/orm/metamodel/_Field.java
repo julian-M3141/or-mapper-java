@@ -9,42 +9,92 @@ import java.time.format.DateTimeParseException;
 
 import static java.lang.Enum.valueOf;
 
-
+/**
+ * This class stores the meta information if a column
+ */
 public class _Field {
 
+    /**
+     * The table of the field
+     */
     private _Entity entity;
 
+    /**
+     * Stores the name of the field
+     */
     private String name;
 
+    /**
+     * Stores the type of the column
+     */
     private Class<?> columnType = Void.class;
 
+    /**
+     * Stores the name of the column
+     */
     private String columnName = "";
 
+    /**
+     * Is true if the field is the primary key
+     */
     private boolean isPK = false;
 
+    /**
+     * Is true if the field is the foreign key
+     */
     private boolean isFK = false;
 
+    /**
+     * Stores the class of the field
+     */
     private Class<?> fieldType = Void.class;
 
+    /**
+     * Is true if the column is nullable
+     */
     private boolean isNullable = false;
 
+    /**
+     * Stores the getter of the field
+     */
     private Method getter = null;
 
+    /**
+     * Stores the setter of the field
+     */
     private Method setter = null;
 
+    /**
+     * Stores the name of the table where the many-to-many relationship is stored
+     */
     private String assignmentTable = null;
 
+    /**
+     * Stores the name of the column where the primary key of the current table is stored as foreign key
+     */
     private String remoteColumnName = null;
 
+    /**
+     * Is true if it is a many-to-many relationship
+     */
     private boolean manyToMany = false;
 
+    /**
+     * Is true if it is a one-to-many relationship
+     */
     private boolean oneToMany = false;
 
+    /**
+     * Creates a new _Field object and sets the entity and the name of the field
+     * @param entity the entity
+     * @param name the name of the field
+     */
     public _Field(_Entity entity, String name) {
         this.entity = entity;
         this.name = name;
     }
 
+    // some getters and setters
     public _Entity getEntity() {
         return entity;
     }
@@ -117,16 +167,30 @@ public class _Field {
         this.setter = setter;
     }
 
+    /**
+     * Invokes the underlying getter method
+     * @param o the object, on which the method is invoked
+     * @return returns the returnvalue of the method
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     */
     public Object getValue(Object o) throws InvocationTargetException, IllegalAccessException {
         return fieldType.isEnum() ? getter.invoke(o).toString() : getter.invoke(o);
     }
 
+    /**
+     * Invokes the underlying setter method
+     * @param o the object, on which the method is invoked
+     * @param value the value which will be set
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     */
     public void setValue(Object o, Object value) throws InvocationTargetException, IllegalAccessException {
         if(fieldType.isEnum()){
+            // stores the enum as a string in a database // todo for later: annotate the enum to decide whether to strore as string or int
             Class c = fieldType;
             var enumvalue = getInstance((String)value,c);
             setter.invoke(o, enumvalue);
-//            setter.invoke(o, Enum.valueOf( fieldType,(String)value) );
         }else if(fieldType.equals(LocalDate.class)){
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.S");
             String date = value.toString();

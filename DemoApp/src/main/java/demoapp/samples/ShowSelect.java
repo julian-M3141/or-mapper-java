@@ -40,7 +40,7 @@ public class ShowSelect {
 
         //show many to many
 
-        System.out.println("\n\n[2.4] Show save with fk (many to many)");
+        System.out.println("\n\n[2.4] Show select with fk (many to many)");
         System.out.println("######################################\n");
 
         ORM.setCache(new Cache());

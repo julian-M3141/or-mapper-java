@@ -2,7 +2,6 @@ package orm;
 
 
 import lombok.extern.java.Log;
-import lombok.extern.log4j.Log4j2;
 import orm.metamodel._Entity;
 import orm.metamodel._Field;
 
@@ -88,10 +87,10 @@ public class ORM {
     public static void save(Object o) throws InvocationTargetException, IllegalAccessException, SQLException {
         var entity = getEntity(o);
         if(entity==null) return;
-        if (!cache.hasChanged(o)){
+        if (!cache.hasChanged(entity.getMember(),o)){
             return;
         }
-        cache.put(o);
+        cache.put(entity.getMember(),o);
 
         saveHelper(entity,o);
     }
@@ -112,10 +111,9 @@ public class ORM {
         var entity = getEntity(t);
         if(entity==null) return;
         if (!cache.hasChanged(t,o)){
-            //System.out.println("object is in cache: "+o.toString());
             return;
         }
-        cache.put(o);
+        cache.put(t,o);
         saveHelper(entity,o);
     }
 
@@ -131,7 +129,6 @@ public class ORM {
      * @throws IllegalAccessException
      */
     private static void saveHelper(_Entity entity, Object o) throws SQLException, InvocationTargetException, IllegalAccessException {
-
 
         var insert = entity.getSQL_INSERT() + " " + entity.getSQL_UPDATE();
 
@@ -185,31 +182,66 @@ public class ORM {
      * @throws IllegalAccessException
      */
     protected static void saveExternals(Object o,Collection<Object> list,_Field field) throws SQLException, InvocationTargetException, IllegalAccessException {
+        var entity = getEntity(o);
+        var pk = entity.getPrimaryKey().getValue(o);
+
         if(field.isOneToMany()){
+            var type = field.getColumnType();
+            var outer_entity = getEntity(type);
+            if(field.isNullable()){
+                var sql = "UPDATE "+outer_entity.getTableName()
+                        + " SET " + field.getRemoteColumnName()
+                        + "=NULL WHERE " + field.getRemoteColumnName() + "=?;";
+                var stmt = getConnection().prepareStatement(sql);
+                stmt.setObject(1,pk);
+                stmt.execute();
+                stmt.close();
+            }
+            var sql = "UPDATE "+outer_entity.getTableName()
+                    + " SET " + field.getRemoteColumnName()
+                    + "=? WHERE " + outer_entity.getPrimaryKey().getColumnName() + "=?;";
+            var stmt = getConnection().prepareStatement(sql);
             for (var value : list){
                 save(value);
+                stmt.setObject(1,pk);
+                stmt.setObject(2,outer_entity.getPrimaryKey().getValue(value));
+                stmt.execute();
             }
         }else{
-            var entity = getEntity(o);
+
+            String deleteCommand = "DELETE FROM "+field.getAssignmentTable()+ " WHERE "+field.getColumnName()+"=?;";
+            var deleteStatement = getConnection().prepareStatement(deleteCommand);
+            deleteStatement.setObject(1,pk);
+            deleteStatement.execute();
+            deleteStatement.close();
+
             String command = "INSERT INTO "+field.getAssignmentTable()+" ("+field.getColumnName()+","+field.getRemoteColumnName()+") VALUES (?,?) ON CONFLICT DO NOTHING;";
 
             var stmt = getConnection().prepareStatement(command);
-            var pk = entity.getPrimaryKey().getValue(o);
             for(var value : list){
+                save(value);
                 var outerEntity = getEntity(value);
                 stmt.setObject(1,pk);
                 stmt.setObject(2,outerEntity.getPrimaryKey().getValue(value));
                 stmt.execute();
             }
+            System.out.println(command);
             stmt.close();
         }
     }
 
 
     //creates object from primary key
+
+    /**
+     * executes a select query using the primary key and creates an object from the selected data
+     * @param c the class of the object, that will be returned.
+     * @param pk the primary key of the object.
+     * @param <T> the generic type for the object.
+     * @return returns the requested object from the database or null if it not exists
+     */
     protected static <T> Object createObject(Class<T> c, Object pk) {
         if(cache.contains(c,pk)){
-            //System.out.println("get object from cache: " + c.getName() + " - "+pk);
             return cache.get(c,pk);
         }
         var entity = getEntity(c);
@@ -230,7 +262,7 @@ public class ORM {
             }
 
 
-            cache.put(obj);
+            cache.put(c,obj);
             return obj;
 
 
@@ -243,7 +275,15 @@ public class ORM {
     }
 
 
-    //creates object from resultset from sql query
+
+    /**
+     * creates object from resultset from sql query using the metadata from Entity object.
+     * If the class is inherited from another class, it will set all fields from the parent class
+     * @param c the class of the object, that will be returned.
+     * @param pk the primary key of the object, that will be returned. Is needed for cache look-up
+     * @param rs the resultset with the data, from which the object will be created
+     * @return returns the requested object
+     */
     private static Object createObjectFromResultSet(Class<?> c,Object pk, ResultSet rs) {
         if(cache.contains(c,pk)){
             //System.out.println("Get object form cache: "+c.getName()+ " - " + pk);
@@ -274,7 +314,6 @@ public class ORM {
             //and copy fields from childobject to parentobject
             if(!getEntity(c).getMember().getSuperclass().equals(Object.class)){
                 var parent = createObject(c.getSuperclass(),pk);
-//                System.out.println("Parent : " +parent);
                 for(_Field f : getEntity(c.getSuperclass()).getFields()){
                     f.setValue(obj,f.getValue(parent));
                 }
@@ -285,8 +324,7 @@ public class ORM {
         }
 
 
-        //System.out.println("put object into cache " + obj);
-        cache.put(obj);
+        cache.put(c,obj);
         for(var field : getEntity(c).getExternals()){
             try {
                 field.setValue(obj,getExternals(field.getColumnType(),pk,field));
@@ -297,9 +335,21 @@ public class ORM {
         return obj;
     }
 
+    /**
+     * Selects a many to many or one to many relationship as a Collection from the database to the given primary key
+     * @param t the class of the external field
+     * @param pk the primary key of the object
+     * @param field the external field
+     * @param <T> the generic Type for the external field
+     * @return a Collection of the external field
+     * @throws SQLException
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     */
     private static <T> Collection<T> getExternals(Class<T> t, Object pk, _Field field) throws SQLException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         if(field.isManyToMany()){
-//            System.out.println("many to many");
             Collection<T> list = new ArrayList<T>();
             String sql = new StringBuilder("SELECT ")
                     .append(field.getColumnName())
@@ -343,15 +393,91 @@ public class ORM {
         }
     }
 
+    /**
+     * Selects a record from the database and creates an object from the data.
+     * @param c the class of the object, that will be returned.
+     * @param pk the primary key of the object.
+     * @param <T> the generic type of the returned object.
+     * @return the requested object from the database.
+     */
     public static <T> T get(Class<T> c, Object pk){
         return (T) createObject(c,pk);
     }
 
+    /**
+     * Deletes the object from the database.
+     * @param o the object, that will be deleted.
+     * @throws SQLException
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     */
+    public static void delete(Object o) throws SQLException, InvocationTargetException, IllegalAccessException {
+        var entity = getEntity(o);
+        deleteHelper(entity,o);
+    }
 
+    /**
+     * Deletes the requested Object from the database.
+     * Is required for deleting the record from the parent table.
+     * @param c the class of the object that will be deleted.
+     * @param o the object that will be deleted.
+     * @throws SQLException
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     */
+    private static void delete(Class<?> c, Object o) throws SQLException, InvocationTargetException, IllegalAccessException {
+        var entity = getEntity(c);
+        deleteHelper(entity,o);
+    }
+
+    /**
+     * private helper function to delete an object from a database.
+     * @param entity the _Entity object of the to be deleted object.
+     * @param o the object that will be deleted.
+     * @throws SQLException
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     */
+     private static void deleteHelper(_Entity entity, Object o) throws SQLException, InvocationTargetException, IllegalAccessException {
+
+         // get slq statement
+         var sql = entity.getSQL_DELETE();
+
+         //delete record
+         PreparedStatement stmt = getConnection().prepareStatement(sql);
+         System.out.println("o: "+entity.getMember().getName());
+         stmt.setObject(1,entity.getPrimaryKey().getValue(o));
+         stmt.execute();
+
+         //delete parent if inheritance
+         if(!entity.getMember().getSuperclass().equals(Object.class)){
+             var tmp = entity.getMember();
+             while(!tmp.getSuperclass().equals(Object.class)){
+                 tmp = tmp.getSuperclass();
+                 delete(tmp,o);
+             }
+         }
+     }
+
+
+    /**
+     * Creates a new Query object with the given sql command.
+     * The query can be executed with the execute method, if there is
+     * no return value, executeQueryMany if there should be many return values
+     * and executeQueryOne, if there should be only one return value
+     * @param command the sql command which will be executed.
+     * @return returns a new QueryObject
+     * @throws SQLException
+     */
     public static QueryObject query(String command) throws SQLException {
         return new QueryObject(command);
     }
 
+    /**
+     * creates a new QueryObject for fluent API for selecting an object from the database
+     * @param c the Class of the to be selected object
+     * @return a new QueryObject
+     */
     public static QueryObject get(Class<?> c){
         final var tablename = getEntity(c).getTableName();
         if(c.getSuperclass().equals(Object.class)){
@@ -377,22 +503,20 @@ public class ORM {
             joins += " INNER JOIN "+entity.getTableName() + " ON "+tablename+"."+id+"="+entity.getTableName()+"."+entity.getPrimaryKey().getName();
         }
 
-        //filter out distinct columnnames
-        var fieldsFiltered = fields.stream()
-                .distinct()
-                .map(x -> {
-                    if(x.equals(id)){
-                        return tablename+"."+x;
-                    }else{
-                        return x;
-                    }
-                })
-                .collect(Collectors.toList());
-        var sql = "SELECT "+ String.join(", ", fieldsFiltered)+" FROM "+tablename+joins;
+        var sql = "SELECT "+ String.join(", ", fields)+" FROM "+tablename+joins;
         return new QueryObject(c,sql);
     }
 
     //package private
+
+    /**
+     * Executes a sql query and creates a new Object to the given class.
+     * @param c the class of the object which will be returned.
+     * @param queryObject the QueryObject, which holds the sql command.
+     * @param <T> the generic type for the class.
+     * @return returns the requested object.
+     * @throws SQLException
+     */
     static <T> T executeQueryOne(Class<T> c, QueryObject queryObject) throws SQLException {
         System.out.println(queryObject.getSQL());
         PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
@@ -407,6 +531,14 @@ public class ORM {
         return null;
     }
 
+    /**
+     * Executes a sql query and creates a new list of Objects to the given class.
+     * @param c the class of the list which will be returned.
+     * @param queryObject the QueryObject, which holds the sql command.
+     * @param <T> the generic type for the class.
+     * @return returns a list of the requested object.
+     * @throws SQLException
+     */
     static <T> List<T> executeQueryMany(Class<T> c, QueryObject queryObject) throws SQLException {
         System.out.println(queryObject.getSQL());
         PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
@@ -417,17 +549,32 @@ public class ORM {
             Object pk = resultSet.getObject(getEntity(c).getPrimaryKey().getColumnName());
             result.add((T) createObjectFromResultSet(c,pk,resultSet));
         }
+        stmt.close();
 
         return result;
     }
 
 
-    public static <T> void execute(Class<T> c, QueryObject queryObject) throws SQLException {
+    /**
+     * Executes a sql query.
+     * @param c the class on which the query is executed on.
+     * @param queryObject the QueryObject, which holds the sql command.
+     * @param <T> the generic type for the class.
+     * @throws SQLException
+     */
+    static <T> void execute(Class<T> c, QueryObject queryObject) throws SQLException {
         PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
         stmt.execute();
+        stmt.close();
     }
 
-    public static int count(QueryObject queryObject) throws SQLException {
+    /**
+     * returns the number of records in a table
+     * @param queryObject the QueryObject, which holds the sql command.
+     * @return returns the number of records as int
+     * @throws SQLException
+     */
+    static int count(QueryObject queryObject) throws SQLException {
         System.out.println(queryObject.getSQL());
         PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
         ResultSet resultSet = stmt.executeQuery();

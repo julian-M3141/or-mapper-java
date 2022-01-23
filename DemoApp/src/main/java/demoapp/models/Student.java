@@ -18,5 +18,6 @@ public class Student extends Person {
 
     @Field(columnName = "fk_class", isNullable = false)
     @ForeignKey
+    @EqualsAndHashCode.Exclude // as recursive aggregation
     protected MyClass myClass;
 }

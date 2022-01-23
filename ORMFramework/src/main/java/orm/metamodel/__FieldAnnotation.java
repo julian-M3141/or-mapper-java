@@ -5,22 +5,68 @@ import orm.annotations.PrimaryKey;
 
 import java.lang.reflect.Field;
 
+/**
+ * A helper class for storing the information of a field
+ */
 public class __FieldAnnotation {
+
+    /**
+     * The name of the field
+     */
     private String fieldName = "";
+
+    /**
+     * The name of the column in the database
+     */
     private String columnName = "";
+
+    /**
+     * The type of the column
+     */
     private Class<?> columnType = Void.class;
+
+    /**
+     * Stores whether the column is nullable
+     */
     private boolean isNullable = false;
+
+    /**
+     * Stores whether the column is the primary key
+     */
     private boolean isPK = false;
+
+    /**
+     * Stores whether the field is a foreign key
+     */
     private boolean isFK = false;
+
+    /**
+     * Stores whether the foreign key is a many to many relationship
+     */
     private boolean isManyToMany = false;
+
+    /**
+     * Stores whether the foreign key is a one to many relationship
+     */
     private boolean isOneToMany = false;
+
+    /**
+     * Stores the name of the table where the many-to-many relationship is stored
+     */
     private String assignmentTable = "";
+
+    /**
+     * Stores the name of the column where the primary key of the current table is stored as foreign key
+     */
     private String remoteColumnName = "";
 
+    /**
+     * Creates a new Object
+     * @param field the Field, from which the information is stored
+     */
     public __FieldAnnotation(Field field) {
 
         //field annotation
-        //todo set annotation to runtime
         var fann = field.getAnnotation(orm.annotations.Field.class);
         if(fann != null){
             fieldName = (fann.fieldName() == null || fann.fieldName().isBlank()) ? field.getName() : fann.fieldName();
@@ -33,9 +79,6 @@ public class __FieldAnnotation {
         var pkann = field.getAnnotation(orm.annotations.PrimaryKey.class);
         if(pkann != null){
             isPK = true;
-            /*fieldName = (pkann.fieldName() == null || pkann.fieldName().isBlank()) ? field.getName() : pkann.fieldName();
-            columnName = (pkann.columnName() == null || pkann.columnName().isBlank()) ? field.getName() : pkann.columnName();
-            columnType = (pkann.columnType() == null || pkann.columnType().equals(Void.class)) ? field.getType() : pkann.columnType();*/
         }
 
         //foreign key annotation
@@ -57,6 +100,8 @@ public class __FieldAnnotation {
             }
         }
     }
+
+    // some getter for the fields
 
     public String getFieldName() {
         return fieldName;

@@ -2,10 +2,7 @@ package demoapp.models;
 
 
 import lombok.*;
-import orm.annotations.Entity;
-import orm.annotations.Field;
-import orm.annotations.ForeignKey;
-import orm.annotations.PrimaryKey;
+import orm.annotations.*;
 
 import java.util.List;
 
@@ -30,5 +27,6 @@ public class MyClass {
     @EqualsAndHashCode.Exclude  // without, equal would be infinitely circular
     @ForeignKey(isOneToMany = true, remoteColumnName = "fk_class", columnType = Student.class)
     @Field
+    @IgnoreClone
     List<Student> students;
 }

@@ -11,11 +11,11 @@ import java.time.LocalDate;
 public class ShowUpdate {
     public static void show(){
         System.out.println();
-        System.out.println("[3] Demonstrate update");
+        System.out.println("[4] Demonstrate update");
         System.out.println("######################################\n");
 
         //show simple save
-        System.out.println("[3.1] Show simple update");
+        System.out.println("[4.1] Show simple update");
         System.out.println("######################################\n");
         var person = ORM.get(Person.class,"1234");
         System.out.println(person);
@@ -29,7 +29,7 @@ public class ShowUpdate {
 
 
 //         show save with inheritance
-        System.out.println("\n\n[3.2] Show update with inheritance (table per type)");
+        System.out.println("\n\n[4.2] Show update with inheritance (table per type)");
         System.out.println("######################################\n");
         var teacher = ORM.get(Teacher.class, "123L");
         System.out.println(teacher);
@@ -43,7 +43,7 @@ public class ShowUpdate {
         System.out.println(ORM.get(Teacher.class,"123L"));
 
 
-        System.out.println("\n\n[3.3] Show update with fk (one to many and many to one) ");
+        System.out.println("\n\n[4.3] Show update with fk (one to many and many to one) ");
         System.out.println("######################################\n");
         //show one to many
         var myClass = ORM.get(MyClass.class,"c.1");
@@ -81,19 +81,20 @@ public class ShowUpdate {
 
         //show many to many
 
-        System.out.println("\n\n[2.4] Show save with fk (many to many)");
+        System.out.println("\n\n[4.4] Show update with fk (many to many)");
         System.out.println("######################################\n");
 
         var course = ORM.get(Course.class, "12");
         var student3 = new Student();
-        student3.setId("st3");
+        student3.setId("st4");
         student3.setFirstname("Max");
-        student3.setLastname("Musterstudent1");
+        student3.setLastname("Musterstudent4");
         student3.setSex(Sex.MALE);
         student3.setBirthdate(LocalDate.of(1996,1,1));
-        student3.setGrade(Grade.A);
+        student3.setGrade(Grade.D);
         student3.setMyClass(myClass);
         course.getStudents().add(student3);
+        course.getStudents().add(student);
 
         try {
             ORM.save(course);

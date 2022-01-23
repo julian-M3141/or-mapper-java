@@ -2,10 +2,8 @@
 * todo save on many to many better update
 * todo write unit/integration tests
 
-* todo : änderungsverfolgung
 * todo : locking
 * todo direkte objektzugriffe
-* todo fluent api tests
 * todo features (tabellen erstellen, .. )
 * todo unit tests
 
