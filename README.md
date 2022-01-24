@@ -1,6 +1,6 @@
 # or-mapper-java
 
-This framework supports functionality for or-mapping using a PostgreSQL database. It supports saving, updating, selecting and deleting objects.
+This framework supports functionality for code-first or-mapping using a PostgreSQL database. It supports saving, updating, selecting and deleting objects.
 It also supports one-to-many and many-to-many relationships, custom queries, a fluent api for custom conditions and ordering.
 Inheritance is implemented with table-per-type, 
 
@@ -8,7 +8,7 @@ Inheritance is implemented with table-per-type,
 
 ### configuration file
 
-The configuration file *orm.properties* stores information about url, user and password.
+The configuration file *orm.properties* in the *resources*-folder stores information about url, user and password.
 It also determines whether the sql commands should be logged, default is true. 
 
 ```
@@ -99,3 +99,8 @@ which will return a list of the requested objects
 For custom update, delete or insert statements, use the execute command
 
 `ORM.query("delete from persons where id=1").execute()`
+
+### things that are not implemented
+
+* lazy loading
+* locking

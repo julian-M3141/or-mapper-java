@@ -4,6 +4,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
+
+/**
+ * Implements the functionality of the ICache Interface, can save, get, delete objects and determine whether an object has changed since last save/select.
+ */
 public class Cache implements ICache {
 
     /**

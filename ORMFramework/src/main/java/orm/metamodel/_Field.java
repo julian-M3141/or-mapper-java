@@ -7,7 +7,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
-import static java.lang.Enum.valueOf;
 
 /**
  * This class stores the meta information if a column

@@ -19,8 +19,7 @@ public class MyClass {
     @Field(columnName = "name", length = 50)
     protected String name;
 
-    @ForeignKey
-    @Field(columnName = "fk_teacher")
+    @ForeignKey(columnName = "fk_teacher")
     protected Teacher teacher;
 
     @ToString.Exclude

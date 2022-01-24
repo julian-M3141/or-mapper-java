@@ -1,7 +1,7 @@
 package orm;
 
 
-import lombok.extern.java.Log;
+
 import orm.metamodel._Entity;
 import orm.metamodel._Field;
 
@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
  * ORM provides the interface for orm-functionality
  * @author julian
  */
-@Log
 public class ORM {
     /**
      * This field contains all used Entities
@@ -78,7 +77,7 @@ public class ORM {
      */
     private static void log(String text){
         if(showSql){
-            log.info(text);
+            System.out.println(text);
         }
     }
 
@@ -243,7 +242,9 @@ public class ORM {
             deleteStatement.execute();
             deleteStatement.close();
 
-            String command = "INSERT INTO "+field.getAssignmentTable()+" ("+field.getColumnName()+","+field.getRemoteColumnName()+") VALUES (?,?) ON CONFLICT DO NOTHING;";
+            String command = "INSERT INTO "+field.getAssignmentTable()
+                    +" ("+field.getColumnName()+","+field.getRemoteColumnName()
+                    +") VALUES (?,?) ON CONFLICT DO NOTHING;";
 
             var stmt = getConnection().prepareStatement(command);
             for(var value : list){
@@ -380,16 +381,15 @@ public class ORM {
     private static <T> Collection<T> getExternals(Class<T> t, Object pk, _Field field) throws SQLException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         if(field.isManyToMany()){
             Collection<T> list = new ArrayList<T>();
-            String sql = new StringBuilder("SELECT ")
-                    .append(field.getColumnName())
-                    .append(", ")
-                    .append(field.getRemoteColumnName())
-                    .append(" FROM ")
-                    .append(field.getAssignmentTable())
-                    .append(" WHERE ")
-                    .append(field.getColumnName())
-                    .append(" = ?;")
-                    .toString();
+            String sql = "SELECT " +
+                    field.getColumnName() +
+                    ", " +
+                    field.getRemoteColumnName() +
+                    " FROM " +
+                    field.getAssignmentTable() +
+                    " WHERE " +
+                    field.getColumnName() +
+                    " = ?;";
             PreparedStatement stmt = getConnection().prepareStatement(sql);
             stmt.setObject(1,pk);
             log(sql);

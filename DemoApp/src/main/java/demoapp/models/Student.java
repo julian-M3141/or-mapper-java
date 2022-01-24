@@ -16,8 +16,8 @@ public class Student extends Person {
     @Enum(enumType = EnumType.STRING)
     protected Grade grade;
 
-    @Field(columnName = "fk_class", isNullable = false)
-    @ForeignKey
+    @Field(isNullable = false)
+    @ForeignKey(columnName = "fk_class")
     @EqualsAndHashCode.Exclude // as recursive aggregation
     protected MyClass myClass;
 }

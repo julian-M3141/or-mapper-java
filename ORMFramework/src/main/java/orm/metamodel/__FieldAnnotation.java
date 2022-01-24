@@ -68,6 +68,9 @@ public class __FieldAnnotation {
 
         //field annotation
         var fann = field.getAnnotation(orm.annotations.Field.class);
+        fieldName = field.getName();
+        columnName = field.getName();
+        columnType = field.getType();
         if(fann != null){
             fieldName = (fann.fieldName() == null || fann.fieldName().isBlank()) ? field.getName() : fann.fieldName();
             columnName = (fann.columnName() == null || fann.columnName().isBlank()) ? field.getName() : fann.columnName();
@@ -85,8 +88,8 @@ public class __FieldAnnotation {
         var fkann = field.getAnnotation(ForeignKey.class);
         if(fkann != null){
             isFK = true;
-            if(fieldName.equals("")) fieldName = (fkann.fieldName() == null || fkann.fieldName().isBlank()) ? field.getName() : fkann.fieldName();
-            if(columnName.equals("")) columnName = (fkann.columnName() == null || fkann.columnName().isBlank()) ? field.getName() : fkann.columnName();
+            fieldName = (fkann.fieldName() == null || fkann.fieldName().isBlank()) ? field.getName() : fkann.fieldName();
+            columnName = (fkann.columnName() == null || fkann.columnName().isBlank()) ? field.getName() : fkann.columnName();
             if(!(fkann.columnType() == null || fkann.columnType().equals(Void.class))) columnType = fkann.columnType();
             if(fkann.isNullAble()) isNullable = true;
             if(fkann.isOneToMany()) {

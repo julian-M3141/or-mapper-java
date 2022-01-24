@@ -1,4 +1,5 @@
 
-* todo direkte objektzugriffe
 * todo features (tabellen erstellen, .. )
-* todo unit tests
+
+* todo: delete for externals
+* todo cache checken
