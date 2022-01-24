@@ -5,6 +5,7 @@ import lombok.extern.java.Log;
 import orm.metamodel._Entity;
 import orm.metamodel._Field;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.*;
@@ -15,7 +16,6 @@ import java.util.stream.Collectors;
  * @author julian
  */
 @Log
-
 public class ORM {
     /**
      * This field contains all used Entities
@@ -32,6 +32,10 @@ public class ORM {
      */
     protected static ICache cache = new Cache();
 
+    /**
+     * This field determines whether to show the sql queries
+     */
+    protected static boolean showSql = true;
 
     /**
      * Sets a new Cache for the ORM class
@@ -51,10 +55,31 @@ public class ORM {
         //todo get data from a config file
         //todo throw own exception
         if(connection==null){
-            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/testdb",
-                    "testuser", "testpwd");
+            String url = "";
+            String user = "";
+            String password = "";
+            try {
+                url = ConfigurationHandler.getConfigPropertyValue("dburl");
+                user = ConfigurationHandler.getConfigPropertyValue("dbuser");
+                password = ConfigurationHandler.getConfigPropertyValue("dbpassword");
+                showSql = Boolean.parseBoolean(ConfigurationHandler.getConfigPropertyValue("show-sql"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            connection = DriverManager.getConnection(url,
+                    user , password);
         }
         return connection;
+    }
+
+    /**
+     * Logs the provided text to standard output
+     * @param text the text that should be logged
+     */
+    private static void log(String text){
+        if(showSql){
+            log.info(text);
+        }
     }
 
 
@@ -162,7 +187,7 @@ public class ORM {
             save(entity.getMember().getSuperclass(), o);
         }
 
-        System.out.println(insert);
+        log(insert);
 
         statement.execute();
         statement.close();
@@ -194,6 +219,7 @@ public class ORM {
                         + "=NULL WHERE " + field.getRemoteColumnName() + "=?;";
                 var stmt = getConnection().prepareStatement(sql);
                 stmt.setObject(1,pk);
+                log(sql);
                 stmt.execute();
                 stmt.close();
             }
@@ -203,6 +229,7 @@ public class ORM {
             var stmt = getConnection().prepareStatement(sql);
             for (var value : list){
                 save(value);
+                log(sql);
                 stmt.setObject(1,pk);
                 stmt.setObject(2,outer_entity.getPrimaryKey().getValue(value));
                 stmt.execute();
@@ -212,6 +239,7 @@ public class ORM {
             String deleteCommand = "DELETE FROM "+field.getAssignmentTable()+ " WHERE "+field.getColumnName()+"=?;";
             var deleteStatement = getConnection().prepareStatement(deleteCommand);
             deleteStatement.setObject(1,pk);
+            log(deleteCommand);
             deleteStatement.execute();
             deleteStatement.close();
 
@@ -220,12 +248,12 @@ public class ORM {
             var stmt = getConnection().prepareStatement(command);
             for(var value : list){
                 save(value);
+                log(command);
                 var outerEntity = getEntity(value);
                 stmt.setObject(1,pk);
                 stmt.setObject(2,outerEntity.getPrimaryKey().getValue(value));
                 stmt.execute();
             }
-            System.out.println(command);
             stmt.close();
         }
     }
@@ -255,6 +283,7 @@ public class ORM {
 
             //set primary key
             statement.setObject(1,pk);
+            log(sql);
             //execute query
             ResultSet rs = statement.executeQuery();
             if(rs.next()){
@@ -363,7 +392,7 @@ public class ORM {
                     .toString();
             PreparedStatement stmt = getConnection().prepareStatement(sql);
             stmt.setObject(1,pk);
-            System.out.println(sql);
+            log(sql);
             ResultSet resultSet = stmt.executeQuery();
             while (resultSet.next()){
                 list.add((T) createObject(t,resultSet.getObject(field.getRemoteColumnName())));
@@ -382,7 +411,7 @@ public class ORM {
                     " WHERE " +
                     field.getRemoteColumnName() +
                     "=?;";
-            System.out.println(sql);
+            log(sql);
             PreparedStatement stmt = getConnection().prepareStatement(sql);
             stmt.setObject(1,pk);
             ResultSet resultSet = stmt.executeQuery();
@@ -445,8 +474,8 @@ public class ORM {
 
          //delete record
          PreparedStatement stmt = getConnection().prepareStatement(sql);
-         System.out.println("o: "+entity.getMember().getName());
          stmt.setObject(1,entity.getPrimaryKey().getValue(o));
+         log(sql);
          stmt.execute();
 
          //delete parent if inheritance
@@ -518,7 +547,7 @@ public class ORM {
      * @throws SQLException
      */
     static <T> T executeQueryOne(Class<T> c, QueryObject queryObject) throws SQLException {
-        System.out.println(queryObject.getSQL());
+        log(queryObject.getSQL());
         PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
         ResultSet resultSet = stmt.executeQuery();
 
@@ -540,7 +569,7 @@ public class ORM {
      * @throws SQLException
      */
     static <T> List<T> executeQueryMany(Class<T> c, QueryObject queryObject) throws SQLException {
-        System.out.println(queryObject.getSQL());
+        log(queryObject.getSQL());
         PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
         ResultSet resultSet = stmt.executeQuery();
         List<T> result = new ArrayList<>();
@@ -563,6 +592,7 @@ public class ORM {
      * @throws SQLException
      */
     static <T> void execute(Class<T> c, QueryObject queryObject) throws SQLException {
+        log(queryObject.getSQL());
         PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
         stmt.execute();
         stmt.close();
@@ -575,7 +605,7 @@ public class ORM {
      * @throws SQLException
      */
     static int count(QueryObject queryObject) throws SQLException {
-        System.out.println(queryObject.getSQL());
+        log(queryObject.getSQL());
         PreparedStatement stmt = getConnection().prepareStatement(queryObject.getSQL());
         ResultSet resultSet = stmt.executeQuery();
 

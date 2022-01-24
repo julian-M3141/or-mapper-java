@@ -1,11 +1,4 @@
 
-* todo save on many to many better update
-* todo write unit/integration tests
-
-* todo : locking
 * todo direkte objektzugriffe
 * todo features (tabellen erstellen, .. )
 * todo unit tests
-
-
-* todo caching verbessern

@@ -6,7 +6,18 @@ Inheritance is implemented with table-per-type,
 
 ## usage
 
-The ORM class provides the functionality for or-mapping.
+### configuration file
+
+The configuration file *orm.properties* stores information about url, user and password.
+It also determines whether the sql commands should be logged, default is true. 
+
+```
+show-sql=true
+dburl=jdbc:postgresql://localhost:5432/testdb
+dbuser=testuser
+dbpassword=testpwd
+```
+
 
 ### Configuring a class
 
