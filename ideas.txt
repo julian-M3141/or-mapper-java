@@ -9,5 +9,3 @@
 
 
 * todo caching verbessern
-* todo dokumentation
-* todo add javadoc

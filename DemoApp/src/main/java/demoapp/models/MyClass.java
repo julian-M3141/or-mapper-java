@@ -27,6 +27,5 @@ public class MyClass {
     @EqualsAndHashCode.Exclude  // without, equal would be infinitely circular
     @ForeignKey(isOneToMany = true, remoteColumnName = "fk_class", columnType = Student.class)
     @Field
-    @IgnoreClone
     List<Student> students;
 }
