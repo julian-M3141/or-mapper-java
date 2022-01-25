@@ -9,14 +9,14 @@ public class Main {
 
         //start database with docker compose (db folder) (only works with docker installed)
 
-//        ShowSave.show();
-//        ShowSelect.show();
-//        ShowCache.show();
-//        ShowUpdate.show();
+        ShowSave.show();
+        ShowSelect.show();
+        ShowCache.show();
+        ShowUpdate.show();
 
-//        ShowQueryAndFluent.showQuery();
-//        ShowQueryAndFluent.showFluent();
-//
+        ShowQueryAndFluent.showQuery();
+        ShowQueryAndFluent.showFluent();
+
         ShowDelete.show();
 
     }

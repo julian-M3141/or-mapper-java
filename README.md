@@ -2,20 +2,26 @@
 
 This framework supports functionality for code-first or-mapping using a PostgreSQL database. It supports saving, updating, selecting and deleting objects.
 It also supports one-to-many and many-to-many relationships, custom queries, a fluent api for custom conditions and ordering.
-Inheritance is implemented with table-per-type, 
+Inheritance is implemented with table-per-type, which is the best option for multiple specialization (a person can both be a teacher and a student).
+
+The demo-app uses a Postgres database, which can be created by using the docker-compose file in the db folder. The init script is optional, as the framework creates the tables automatically.
+
+The full documentation can be viewed by opening the index.html file in the javadoc folder.
 
 ## usage
 
 ### configuration file
 
 The configuration file *orm.properties* in the *resources*-folder stores information about url, user and password.
-It also determines whether the sql commands should be logged, default is true. 
+It also determines whether the sql commands should be logged, default is true.
+Last but not least, the *create-tables* field determines whether the ORM framework shall create the tables.
 
 ```
 show-sql=true
 dburl=jdbc:postgresql://localhost:5432/testdb
 dbuser=testuser
 dbpassword=testpwd
+create-tables=true
 ```
 
 

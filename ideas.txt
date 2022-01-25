@@ -1,5 +1,0 @@
-
-* todo features (tabellen erstellen, .. )
-
-* todo: delete for externals
-* todo cache checken

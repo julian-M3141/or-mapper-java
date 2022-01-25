@@ -2,12 +2,14 @@ package orm;
 
 
 
+import orm.annotations.Entity;
 import orm.metamodel._Entity;
 import orm.metamodel._Field;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,6 +37,11 @@ public class ORM {
      * This field determines whether to show the sql queries
      */
     protected static boolean showSql = true;
+
+    /**
+     * This fields determines whether to create the tables
+     */
+    protected static boolean createTables = false;
 
     /**
      * Sets a new Cache for the ORM class
@@ -89,15 +96,149 @@ public class ORM {
      */
     public static _Entity getEntity(Object object){
         var c = object instanceof Class<?> ? (Class<?>) object : object.getClass();
+
         if(!entities.containsKey(c)){
             try {
+                createTables = Boolean.parseBoolean(ConfigurationHandler.getConfigPropertyValue("create-tables"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
                 entities.put(c, new _Entity(c));
+                if(createTables){
+                    createTable(entities.get(c));
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
                 //todo throw own exception
             }
         }
         return entities.get(c);
+    }
+
+    /**
+     * This method creates a table in the database for the given entity
+     * @param entity the entity for which the table is created
+     */
+    private static void createTable(_Entity entity) {
+        var sql = new StringBuilder("CREATE TABLE IF NOT EXISTS "+entity.getTableName()+" (\n");
+
+        var sqlFields = new StringBuilder();
+        for(var field : entity.getFields()){
+            if(field.isFK() && (field.isManyToMany() || field.isOneToMany())){
+                continue;
+            }
+            var sb = new StringBuilder("\t"+field.getColumnName()+" ");
+            var type = field.getColumnType();
+            if(field.isFK()){
+                var fkEntity = getEntity(field.getFieldType());
+                type = fkEntity.getPrimaryKey().getColumnType();
+            }
+            try {
+                sb.append(getTypeOfColumn(type));
+            } catch (Exception e) {
+                System.err.println(e);;
+                continue;
+            }
+            // set pk and not null checks
+            if(field.isPK()){
+                sb.append("PRIMARY KEY ");
+            }else if(!field.isNullable()){
+                sb.append("NOT NULL ");
+            }
+
+            if(type.isEnum()){
+                var values = Arrays.stream(type.getEnumConstants()).map(v -> "'"+v.toString()+"'").collect(Collectors.joining(","));
+                sb.append("check ("+field.getColumnName()+" IN ("+values+"))");
+            }
+            sqlFields.append(sb + ",\n");
+        }
+        if(!entity.getMember().getSuperclass().equals(Object.class)){
+            var e = getEntity(entity.getMember().getSuperclass());
+            var sb = new StringBuilder("\tFOREIGN KEY (");
+            sb.append(entity.getPrimaryKey().getColumnName());
+            sb.append(")\n\t\tREFERENCES ");
+            sb.append(e.getTableName());
+            sb.append(" ("+e.getPrimaryKey().getColumnName()+"),\n");
+            sqlFields.append(sb);
+        }
+
+        var fks = entity.getForeignKeys().stream()
+                .filter(x -> !x.isOneToMany() && !x.isManyToMany())
+                .collect(Collectors.toList());
+        var fkString = new StringBuilder();
+        for(var fk : fks){
+            var sb = new StringBuilder("\tFOREIGN KEY (");
+            sb.append(fk.getColumnName());
+            sb.append(")\n\t\tREFERENCES ");
+            var ent = getEntity(fk.getColumnType());
+            sb.append(ent.getTableName());
+            sb.append(" ("+ent.getPrimaryKey().getColumnName()+"),\n");
+            fkString.append(sb);
+        }
+        sql.append(sqlFields +""+ fkString+");");
+        sql.deleteCharAt(sql.lastIndexOf(","));
+
+        log(sql.toString());
+
+        try {
+            getConnection().prepareStatement(sql.toString()).execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // create assignment tables
+        var manytomanies = entity.getExternals().stream()
+                .filter(_Field::isManyToMany)
+                .collect(Collectors.toList());
+
+        for(var table : manytomanies){
+            try {
+                var otherEntity = getEntity(table.getColumnType());
+                var colname = table.getColumnName();
+                var colType = getTypeOfColumn(entity.getPrimaryKey().getColumnType());
+                var remotName = table.getRemoteColumnName();
+                var remotType = getTypeOfColumn(otherEntity.getPrimaryKey().getColumnType());
+                var othertable = otherEntity.getTableName();
+                var s = "CREATE TABLE IF NOT EXISTS "+table.getAssignmentTable()+"(\n\t"+
+                        colname + " " + colType+",\n\t"+
+                        remotName + " " + remotType+", \n\t"+
+                        "PRIMARY KEY ("+colname+", "+remotName+"),\n\t"+
+                        "FOREIGN KEY ("+colname+")\n\t\t"+
+                        "REFERENCES "+entity.getTableName()+" ("+entity.getPrimaryKey().getColumnName()+") ON DELETE CASCADE,\n\t"+
+                        "FOREIGN KEY ("+remotName+")\n\t\t"+
+                        "REFERENCES "+otherEntity.getTableName()+" ("+otherEntity.getPrimaryKey().getColumnName()+") ON DELETE CASCADE\n"+
+                        ");";
+                getConnection().prepareStatement(s).execute();
+                System.out.println(s);
+            } catch (Exception e) {
+                System.err.println(e);
+                continue;
+            }
+
+        }
+    }
+
+    private static String getTypeOfColumn(Class<?> type) throws Exception {
+        if(type.equals(int.class) || type.equals(Integer.class)){
+            return "INTEGER ";
+        }else if(type.equals(double.class) || type.equals(Double.class)){
+            return "NUMERIC ";
+        }else if(type.equals(char.class) || type.equals(Character.class)){
+            return "CHAR ";
+        }else if(type.equals(String.class)){
+            return "VARCHAR(255) ";
+        }else if(type.equals(LocalDate.class)){
+            return "TIMESTAMP ";
+        }else if(type.equals(boolean.class) || type.equals(Boolean.class)){
+            return "BOOLEAN ";
+        }else if(type.isEnum()){
+            //todo later: decide to save as int or string
+            return "VARCHAR(255) ";
+        }else{
+            throw new Exception("Type not valid "+type);
+        }
     }
 
 
